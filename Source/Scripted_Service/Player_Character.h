@@ -2,7 +2,9 @@
 
 #pragma once
 
+#include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "EnhancedInputComponent.h"
+#include  "Interface/InteractInterface.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
@@ -10,6 +12,8 @@
 #include "GameFramework/Character.h"
 #include "Player_Character.generated.h"
 
+class UPhysicsHandleComponent;
+class UAnimBlueprint;
 class UInputMappingContext;
 class UInputAction;
 class UInputComponent;
@@ -26,19 +30,25 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// Input Mapping Context
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMappingContext;
 
-	// Move Input Actions
+	// Move Input Action
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputAction> MoveAction;
  
-	// Jump Input Actions
+	// Jump Input Action
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputAction> JumpAction;
 
+	// Look Input Action
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* LookAction;
+
+	// Interact Input Action
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* InteractAction;
 	
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -47,9 +57,11 @@ public:
 	void Move(const FInputActionValue& Value);
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
+	UFUNCTION()
+	void Interact();
 	
 	UPROPERTY(VisibleAnywhere, Category = Camera)
-	UCameraComponent* FirstPersonCamera;
+	UCameraComponent* FirstPersonCameraComponent;
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	FVector FirstPersonCameraOffset = FVector(2.8f, 5.9f, 0);
 
@@ -60,9 +72,23 @@ public:
 	UPROPERTY(EditAnywhere, Category = Camera)
 	float FirstPersonScale = 0.6f;
 
+	// Interact Distance
+	UPROPERTY(EditAnywhere, Category = Interact)
+	float InteractDistance = 200;
+	
 	// First Person mesh
 	UPROPERTY(VisibleAnywhere, Category = Mesh)
 	USkeletalMeshComponent* FirstPersonMeshComponent;
+
+	// Physics Component
+	UPROPERTY(VisibleAnywhere, Category = PhysicsHandle)
+	UPhysicsHandleComponent* PhysicsHandleComponent;
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UPROPERTY(EditAnywhere, Category = Animation)
+	UAnimBlueprint* FirstPersonDefaultAnim;
+
+	UPROPERTY()
+	bool bIsHoldingItem;
 };

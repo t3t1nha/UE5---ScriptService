@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Player_Character.h"
 
 // Sets default values
@@ -8,24 +7,6 @@ APlayer_Character::APlayer_Character()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(FName("FirstPersonCamera"));
-	check(FirstPersonCamera != nullptr);
-
-	// Attach the camera component to the first-person Skeletal Mesh.
-	FirstPersonCamera->SetupAttachment(FirstPersonMeshComponent, FName("head"));
-
-	// Position the camera slightly above the eyes and rotate it to behind the player's head
-	FirstPersonCamera->SetRelativeLocationAndRotation(FirstPersonCameraOffset, FRotator(0.0f, 90.0f, -90.0f));
-
-	// Enable the pawn to control camera rotation.
-	FirstPersonCamera->bUsePawnControlRotation = true;
-
-	// Enable first-person rendering and set default FOV and scale values
-	FirstPersonCamera->bEnableFirstPersonFieldOfView = true;
-	FirstPersonCamera->bEnableFirstPersonScale = true;
-	FirstPersonCamera->FirstPersonFieldOfView = FirstPersonFOV;
-	FirstPersonCamera->FirstPersonScale = FirstPersonScale;
 	
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(FName("FirstPersonMeshComponent"));
 	check(FirstPersonMeshComponent != nullptr);
@@ -35,6 +16,33 @@ APlayer_Character::APlayer_Character()
 	FirstPersonMeshComponent->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
 
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
+	
+	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(FName("FirstPersonCameraComponent"));
+	check(FirstPersonCameraComponent != nullptr);
+
+	// Attach the camera component to the first-person Skeletal Mesh.
+	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, FName("head"));
+
+	// Position the camera slightly above the eyes and rotate it to behind the player's head
+	FirstPersonCameraComponent->SetRelativeLocationAndRotation(FirstPersonCameraOffset, FRotator(0.0f, 90.0f, -90.0f));
+
+	// Enable the pawn to control camera rotation.
+	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+
+	// Enable first-person rendering and set default FOV and scale values
+	FirstPersonCameraComponent->bEnableFirstPersonFieldOfView = true;
+	FirstPersonCameraComponent->bEnableFirstPersonScale = true;
+	FirstPersonCameraComponent->FirstPersonFieldOfView = FirstPersonFOV;
+	FirstPersonCameraComponent->FirstPersonScale = FirstPersonScale;
+
+	// Create Physics Handle Component
+	PhysicsHandleComponent = NewObject<UPhysicsHandleComponent>(this, TEXT("PhysicsHandleComponent"));
+	check(PhysicsHandleComponent != nullptr)
+
+	// Add Component to Character
+	AddInstanceComponent(PhysicsHandleComponent);
+	PhysicsHandleComponent->OnComponentCreated();
+	PhysicsHandleComponent->RegisterComponent(); 
 }
 
 // Called when the game starts or when spawned
@@ -46,6 +54,9 @@ void APlayer_Character::BeginPlay()
 
 	// Only the owning player sees the first-person mesh
 	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
+
+	// Set the animation on the first person mesh
+	FirstPersonMeshComponent->SetAnimInstanceClass(FirstPersonDefaultAnim->GeneratedClass);
 	
 	// Get the player controller for this character
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -57,7 +68,7 @@ void APlayer_Character::BeginPlay()
 		}
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("We are using PlayerCharacter."));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Using Playuer_Character"));
 }
 
 // Called every frame
@@ -94,6 +105,44 @@ void APlayer_Character::Look(const FInputActionValue& Value)
 	}
 }
 
+void APlayer_Character::Interact()
+{
+	FVector WorldLocation = FirstPersonCameraComponent->GetComponentLocation();
+	FVector Forward = FirstPersonCameraComponent->GetForwardVector();
+
+	FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
+	RV_TraceParams.bTraceComplex = true;
+	RV_TraceParams.bReturnPhysicalMaterial = false;
+	
+	FHitResult Hit;
+	FVector Start = WorldLocation;
+	FVector End = InteractDistance * Forward + WorldLocation;
+	
+	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, RV_TraceParams);
+
+	if (Hit.bBlockingHit)
+	{
+		AActor* HitActor = Hit.GetActor();
+		UActorComponent* Component = Hit.GetComponent();
+		// TODO Make interactable interface in c++
+		
+		bool bisInteractable = HitActor->Implements<UInteractInterface>();
+		if (bisInteractable)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("Implements Interface"));
+
+			
+		}
+		
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interact" + HitActor->GetName() + " hit"));
+	}
+	else
+	{
+		// TODO - Release grabbed item
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("No hit"));
+	}
+}
+
 // Called to bind functionality to input
 void APlayer_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -106,11 +155,12 @@ void APlayer_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Bind Look Action
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayer_Character::Look);
+
+		// Bind Interact Action
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayer_Character::Interact);
 		
 		// Bind Jump Actions
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	}
 }
-
-
