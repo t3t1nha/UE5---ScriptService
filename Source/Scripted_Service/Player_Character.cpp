@@ -36,7 +36,7 @@ APlayer_Character::APlayer_Character()
 	FirstPersonCameraComponent->FirstPersonScale = FirstPersonScale;
 
 	// Create Physics Handle Component
-	PhysicsHandleComponent = NewObject<UPhysicsHandleComponent>(this, TEXT("PhysicsHandleComponent"));
+	PhysicsHandleComponent = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandleComponent"));
 	check(PhysicsHandleComponent != nullptr)
 
 	// Add Component to Character
@@ -76,6 +76,15 @@ void APlayer_Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bIsHoldingItem)
+	{
+		FVector WorldLocation = FirstPersonCameraComponent->GetComponentLocation();
+		FVector ForwardVector = FirstPersonCameraComponent->GetForwardVector();
+
+		FVector NewLocation = WorldLocation + (ForwardVector * GrabDistance);
+		
+		PhysicsHandleComponent->SetTargetLocation(NewLocation);
+	}
 }
 
 void APlayer_Character::Move(const FInputActionValue& Value)
@@ -120,26 +129,37 @@ void APlayer_Character::Interact()
 	
 	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, RV_TraceParams);
 
-	if (Hit.bBlockingHit)
+	if (bIsHoldingItem)
 	{
-		AActor* HitActor = Hit.GetActor();
-		UActorComponent* Component = Hit.GetComponent();
-		// TODO Make interactable interface in c++
-		
-		bool bisInteractable = HitActor->Implements<UInteractInterface>();
-		if (bisInteractable)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("Implements Interface"));
-
-			
-		}
-		
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interact" + HitActor->GetName() + " hit"));
+		PhysicsHandleComponent->ReleaseComponent();
+		bIsHoldingItem = false;
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("Item Dropped"));
 	}
 	else
 	{
-		// TODO - Release grabbed item
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("No hit"));
+		if (Hit.bBlockingHit)
+		{
+			AActor* HitActor = Hit.GetActor();
+			
+			bool bisInteractable = HitActor->Implements<UInteractInterface>();
+			if (bisInteractable)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("Implements Interface"));
+
+				UPrimitiveComponent* HitComponent = Hit.GetComponent();
+				FVector HitLocation = HitActor->GetActorLocation();
+				FRotator HitRotation = HitActor->GetActorRotation();
+				
+				PhysicsHandleComponent->GrabComponentAtLocationWithRotation(HitComponent, FName("None") , HitLocation, HitRotation);
+				bIsHoldingItem = true;
+			}
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interact" + HitActor->GetName() + " hit"));
+		}
+		else
+		{
+			// TODO - Release grabbed item
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("No hit"));
+		}
 	}
 }
 

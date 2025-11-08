@@ -49,6 +49,10 @@ protected:
 	// Interact Input Action
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* InteractAction;
+
+	// Physics Component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UPhysicsHandleComponent* PhysicsHandleComponent;
 	
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -60,7 +64,7 @@ public:
 	UFUNCTION()
 	void Interact();
 	
-	UPROPERTY(VisibleAnywhere, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	UCameraComponent* FirstPersonCameraComponent;
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	FVector FirstPersonCameraOffset = FVector(2.8f, 5.9f, 0);
@@ -73,22 +77,20 @@ public:
 	float FirstPersonScale = 0.6f;
 
 	// Interact Distance
-	UPROPERTY(EditAnywhere, Category = Interact)
-	float InteractDistance = 200;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Interact)
+	float InteractDistance = 200.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = Interact)
+	float GrabDistance = 150.0f;
 	
 	// First Person mesh
 	UPROPERTY(VisibleAnywhere, Category = Mesh)
 	USkeletalMeshComponent* FirstPersonMeshComponent;
-
-	// Physics Component
-	UPROPERTY(VisibleAnywhere, Category = PhysicsHandle)
-	UPhysicsHandleComponent* PhysicsHandleComponent;
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditAnywhere, Category = Animation)
 	UAnimBlueprint* FirstPersonDefaultAnim;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, Category = Interact)
 	bool bIsHoldingItem;
 };
