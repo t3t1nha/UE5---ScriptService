@@ -7,6 +7,14 @@
 AAApparatusActor::AAApparatusActor()
 {
  	PrimaryActorTick.bCanEverTick = false;
+
+	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
+	MeshComponent->SetupAttachment(RootComponent);
+	
+	
+	TriggerBoxComponent = CreateDefaultSubobject<UBoxComponent>(FName("TriggerBoxComponent"));
+	TriggerBoxComponent->SetupAttachment(MeshComponent);
+	TriggerBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AAApparatusActor::OnTriggerBoxComponentOverlap);
 }
 
 // Called when the game starts or when spawned
@@ -79,12 +87,18 @@ void AAApparatusActor::CheckForRecipe()
 			if (bisMatch)
 			{
 				CurrentRecipeData = *Recipe;
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Recipe Found"));
+				if (GEngine)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Recipe Found"));
+				}
 			}
 		}
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("No Recipe Found"));
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("No Recipe Found"));
+	}
 }
 
 void AAApparatusActor::AddIngredient(FName ItemID)
@@ -106,12 +120,69 @@ void AAApparatusActor::AddIngredient(FName ItemID)
 	}
 }
 
+void AAApparatusActor::RemoveIngredient(FName ItemID)
+{
+	if (CurrentIngredients.Contains(ItemID))
+	{
+		CurrentIngredients[ItemID]--;
+	}
+	else
+	{
+		CurrentIngredients.Remove(ItemID);
+	}
+
+	CheckForRecipe();
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Removed Ingredient: " + ItemID.ToString()));
+	}
+}
+
 void AAApparatusActor::StartCookingProcess()
 {
-	
+	if (CurrentRecipeData.OutputItemID != NAME_None && CurrentRecipeData.BaseCookTime > 0.0f)
+	{
+		GetWorldTimerManager().ClearTimer(CookingTimerHandle);
+
+		GetWorldTimerManager().SetTimer(
+			CookingTimerHandle,
+			this,
+			&AAApparatusActor::FinishCooking,
+			CurrentRecipeData.BaseCookTime,
+			false
+		);
+
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Cooking Started"));
+		}
+	}
 }
 
 void AAApparatusActor::FinishCooking()
 {
+	GetWorldTimerManager().ClearTimer(CookingTimerHandle);
+
+	if (CurrentRecipeData.OutputItemID != NAME_None)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Cooking Finished"));
+
+			// TODO: Spawning Logic
+		}
+
+		CurrentIngredients.Empty();
+		CurrentRecipeData = FRecipeData();
+	}
 }
 
+void AAApparatusActor::OnTriggerBoxComponentOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnTriggerBoxComponentOverlap" + OtherActor->GetName()));
+	}
+}
