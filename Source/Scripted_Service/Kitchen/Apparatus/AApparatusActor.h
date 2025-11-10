@@ -3,6 +3,8 @@
 #pragma once
 
 #include "TimerManager.h"
+#include "Components/BoxComponent.h"
+#include "components/MeshComponent.h"
 #include "Engine/DataTable.h"
 #include "CookingSystemTypes.h"
 #include "CoreMinimal.h"
@@ -19,6 +21,12 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UMeshComponent* MeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* TriggerBoxComponent;
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -45,8 +53,16 @@ public:
 	void AddIngredient(FName ItemID);
 
 	UFUNCTION(BlueprintCallable)
+	void RemoveIngredient(FName ItemID);
+	
+	UFUNCTION(BlueprintCallable)
 	void StartCookingProcess();
 
 	UFUNCTION()
 	void FinishCooking();
+
+	UFUNCTION(BlueprintCallable)
+	void OnTriggerBoxComponentOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
 };
