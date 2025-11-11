@@ -1,8 +1,20 @@
-﻿#pragma once
+// Copyright Epic Games, Inc. All Rights Reserved.
 
+#pragma once
+
+#include "Engine/DataTable.h"
+#include "Modules/ModuleManager.h"
 #include "CoreMinimal.h"
-#include "Engine/DataTable.h" 
 #include "CookingSystemTypes.generated.h"
+
+class FCookingSystemTypesModule : public IModuleInterface
+{
+public:
+
+	/** IModuleInterface implementation */
+	virtual void StartupModule() override;
+	virtual void ShutdownModule() override;
+};
 
 // --- ENUM ---
 
