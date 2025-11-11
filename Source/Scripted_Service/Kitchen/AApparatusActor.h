@@ -2,17 +2,22 @@
 
 #pragma once
 
-#include "TimerManager.h"
-#include "Components/BoxComponent.h"
-#include "components/MeshComponent.h"
-#include "Engine/DataTable.h"
-#include "CookingSystemTypes.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimerManager.h"
+#include "Components/BoxComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/DataTable.h"
+#include "Interface/InteractInterface.h"
+#include "CookingSystemTypes.h"
 #include "AApparatusActor.generated.h"
 
+class UStaticMesh;
+class UBoxComponent;
+class UDataTable;
+
 UCLASS()
-class SCRIPTED_SERVICE_API AAApparatusActor : public AActor
+class SCRIPTED_SERVICE_API AAApparatusActor : public AActor, public IInteractInterface
 {
 	GENERATED_BODY()
 	
@@ -23,17 +28,19 @@ protected:
 	virtual void BeginPlay() override;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UMeshComponent* MeshComponent;
+	UStaticMeshComponent* ApparatusMeshComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* TriggerBoxComponent;
-
+	UBoxComponent* DropZoneComponent;
+	
 public:
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	virtual void Interact_Implementation() override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	EApparatusType ApparatusType;
-
+	
 	UPROPERTY(BlueprintReadWrite)
 	TMap<FName, int32> CurrentIngredients;
 
@@ -61,8 +68,9 @@ public:
 	UFUNCTION()
 	void FinishCooking();
 
-	UFUNCTION(BlueprintCallable)
-	void OnTriggerBoxComponentOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-		bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	virtual void OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	virtual void OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Player_Character.h"
+#include "Kitchen/AApparatusActor.h"
+#include "Kitchen/Interface/GrabableInterface.h"
 
 // Sets default values
 APlayer_Character::APlayer_Character()
@@ -68,7 +70,7 @@ void APlayer_Character::BeginPlay()
 		}
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Using Playuer_Character"));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Using Player_Character"));
 }
 
 // Called every frame
@@ -141,8 +143,8 @@ void APlayer_Character::Interact()
 		{
 			AActor* HitActor = Hit.GetActor();
 			
-			bool bisInteractable = HitActor->Implements<UInteractInterface>();
-			if (bisInteractable)
+			bool bisGrabable = HitActor->Implements<UGrabableInterface>();
+			if (bisGrabable)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("Implements Interface"));
 
@@ -152,6 +154,11 @@ void APlayer_Character::Interact()
 				
 				PhysicsHandleComponent->GrabComponentAtLocationWithRotation(HitComponent, FName("None") , HitLocation, HitRotation);
 				bIsHoldingItem = true;
+			}
+			else if (bool bisInteractable = HitActor->Implements<UInteractInterface>())
+			{
+				AAApparatusActor* InteractableItem = Cast<AAApparatusActor>(HitActor);
+				InteractableItem->Interact_Implementation();
 			}
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interact" + HitActor->GetName() + " hit"));
 		}
