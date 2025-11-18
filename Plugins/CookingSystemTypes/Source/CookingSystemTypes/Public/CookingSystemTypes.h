@@ -11,7 +11,7 @@ class FCookingSystemTypesModule : public IModuleInterface
 {
 public:
 
-	/** IModuleInterface implementation */
+	// IModuleInterface implementation
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 };
@@ -69,7 +69,7 @@ struct FItemBaseData : public FTableRowBase
 	FText Description;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
-	class UStaticMesh* Mesh = nullptr;
+	UStaticMesh* Mesh = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Data")
 	ECookState DefaultCookState = ECookState::Raw;

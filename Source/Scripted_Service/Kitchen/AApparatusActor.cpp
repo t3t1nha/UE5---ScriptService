@@ -120,8 +120,9 @@ void AAApparatusActor::CheckForRecipe()
     }
 }
 
-void AAApparatusActor::AddIngredient(FName ItemID)
+void AAApparatusActor::AddIngredient(ABaseIngredient* Ingredient)
 {
+	FName ItemID = Ingredient->ItemID;
 	if (CurrentIngredients.Contains(ItemID))
 	{
 		CurrentIngredients[ItemID]++;
@@ -130,7 +131,8 @@ void AAApparatusActor::AddIngredient(FName ItemID)
 	{
 		CurrentIngredients.Add(ItemID, 1);
 	}
-
+	
+	CurrentIngredientActors.Add(Ingredient);
 	CheckForRecipe();
 
 	if (GEngine)
@@ -139,8 +141,10 @@ void AAApparatusActor::AddIngredient(FName ItemID)
 	}
 }
 
-void AAApparatusActor::RemoveIngredient(FName ItemID)
+void AAApparatusActor::RemoveIngredient(ABaseIngredient* Ingredient)
 {
+	FName ItemID = Ingredient->ItemID;
+	
 	if (CurrentIngredients.Contains(ItemID))
 	{
 		CurrentIngredients[ItemID]--;
@@ -151,7 +155,8 @@ void AAApparatusActor::RemoveIngredient(FName ItemID)
 		CurrentIngredients.Remove(ItemID);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Added Ingredient: " + ItemID.ToString()));
 	}
-
+	
+	CurrentIngredientActors.Remove(Ingredient);
 	CheckForRecipe();
 
 	if (GEngine)
@@ -197,10 +202,33 @@ void AAApparatusActor::FinishCooking()
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Cooking Finished"));
+		}
+		if (!ItemBaseDataTable) return;
 
-			// TODO: Spawning Logic
+		FItemBaseData* ItemData = ItemBaseDataTable->FindRow<FItemBaseData>(CurrentRecipeData.OutputItemID, TEXT("Spawning Output"));
+
+		if (ItemData && IngredientBPClass)
+		{
+			FVector SpawnLocation = DropZoneComponent->GetComponentLocation() + FVector(0.0f, 0.0f, 20.0f);
+
+			// Spawn generic object
+			ABaseIngredient* NewIngredient = GetWorld()->SpawnActor<ABaseIngredient>(IngredientBPClass, SpawnLocation, FRotator::ZeroRotator);
+
+			if (NewIngredient)
+			{
+				// Make correct ingredient
+				NewIngredient->ItemID = CurrentRecipeData.OutputItemID;
+
+				NewIngredient->UpdateVisuals();
+			}
 		}
 
+		for (ABaseIngredient* IngredientActor : CurrentIngredientActors)
+		{
+			IngredientActor->Destroy();			
+		}
+
+		CurrentIngredientActors.Empty();
 		CurrentIngredients.Empty();
 		CurrentRecipeData = FRecipeData();
 	}
@@ -209,7 +237,7 @@ void AAApparatusActor::FinishCooking()
 void AAApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor->ActorHasTag(TEXT("Ingredient")))
+	if (OtherActor)
 	{
 		ABaseIngredient* IngredientActor = Cast<ABaseIngredient>(OtherActor);
 
@@ -225,8 +253,15 @@ void AAApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedCom
 				}
 			} else
 			{
-				AddIngredient(ItemID);
+				AddIngredient(IngredientActor);
 			}
+		}
+	}
+	else
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Actor is not an ingredient"));
 		}
 	}
 }
@@ -234,13 +269,13 @@ void AAApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedCom
 void AAApparatusActor::OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor && OtherActor->ActorHasTag(TEXT("Ingredient")))
+	if (OtherActor)
 	{
-		ABaseIngredient* Ingredient = Cast<ABaseIngredient>(OtherActor);
+		ABaseIngredient* IngredientActor = Cast<ABaseIngredient>(OtherActor);
 
-		if (Ingredient)
+		if (IngredientActor)
 		{
-			FName ItemID = Ingredient->ItemID;
+			FName ItemID = IngredientActor->ItemID;
 
 			if (ItemID == NAME_None)
 			{
@@ -248,7 +283,7 @@ void AAApparatusActor::OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedCompo
 			}
 			else
 			{
-				RemoveIngredient(ItemID);
+				RemoveIngredient(IngredientActor);
 			}
 		}
 	}

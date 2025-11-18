@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseIngredient.h"
 #include "GameFramework/Actor.h"
 #include "TimerManager.h"
 #include "Components/BoxComponent.h"
@@ -41,26 +42,35 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
 	EApparatusType ApparatusType;
 	
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadonly)
 	TMap<FName, int32> CurrentIngredients;
 
-	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UPROPERTY(BlueprintReadonly)
+	TArray<ABaseIngredient*> CurrentIngredientActors;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
 	UDataTable* RecipeDataTable;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
+	UDataTable* ItemBaseDataTable;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
+	TSubclassOf<class ABaseIngredient> IngredientBPClass;
 	
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	FRecipeData CurrentRecipeData;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	FTimerHandle CookingTimerHandle;
 
 	UFUNCTION(BlueprintCallable)
 	void CheckForRecipe();
 
 	UFUNCTION(BlueprintCallable)
-	void AddIngredient(FName ItemID);
+	void AddIngredient(ABaseIngredient* Ingredient);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveIngredient(FName ItemID);
+	void RemoveIngredient(ABaseIngredient* Ingredient);
 	
 	UFUNCTION(BlueprintCallable)
 	void StartCookingProcess();
