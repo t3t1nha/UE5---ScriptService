@@ -135,7 +135,6 @@ void APlayer_Character::Interact()
 	{
 		PhysicsHandleComponent->ReleaseComponent();
 		bIsHoldingItem = false;
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("Item Dropped"));
 	}
 	else
 	{
@@ -146,8 +145,6 @@ void APlayer_Character::Interact()
 			bool bisGrabable = HitActor->Implements<UGrabableInterface>();
 			if (bisGrabable)
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("Implements Interface"));
-
 				UPrimitiveComponent* HitComponent = Hit.GetComponent();
 				FVector HitLocation = HitActor->GetActorLocation();
 				FRotator HitRotation = HitActor->GetActorRotation();
@@ -161,11 +158,6 @@ void APlayer_Character::Interact()
 				InteractableItem->Interact_Implementation();
 			}
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interact" + HitActor->GetName() + " hit"));
-		}
-		else
-		{
-			// TODO - Release grabbed item
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("No hit"));
 		}
 	}
 }
