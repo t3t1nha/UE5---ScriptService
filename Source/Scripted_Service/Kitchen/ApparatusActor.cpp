@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AApparatusActor.h"
+#include "ApparatusActor.h"
 #include "BaseIngredient.h"
 
 
 // Sets default values
-AAApparatusActor::AAApparatusActor()
+AApparatusActor::AApparatusActor()
 {
  	PrimaryActorTick.bCanEverTick = false;
 
@@ -19,35 +19,43 @@ AAApparatusActor::AAApparatusActor()
 }
 
 // Called when the game starts or when spawned
-void AAApparatusActor::BeginPlay()
+void AApparatusActor::BeginPlay()
 {
 	Super::BeginPlay();
 
 	if (DropZoneComponent)
 	{
-		DropZoneComponent->OnComponentBeginOverlap.AddDynamic(this, &AAApparatusActor::OnDropZoneOverlapBegin);
-		DropZoneComponent->OnComponentEndOverlap.AddDynamic(this, &AAApparatusActor::OnDropZoneOverlapEnd);
+		DropZoneComponent->OnComponentBeginOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapBegin);
+		DropZoneComponent->OnComponentEndOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapEnd);
 	}
 }
 
-void AAApparatusActor::Tick(float DeltaTime)
+void AApparatusActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-void AAApparatusActor::Interact_Implementation()
+void AApparatusActor::Interact_Implementation()
 {
 	IInteractInterface::Interact_Implementation();
 	StartCookingProcess();
 	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, TEXT("Apparatus Interact"));
 }
 
-void AAApparatusActor::CheckForRecipe()
+void AApparatusActor::CheckForRecipe()
 {
     CurrentRecipeData = FRecipeData();
     bool bRecipeFound = false;
 
+	if (!RecipeDataTable)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("RecipeDataTable not set on Apparatus"));
+		}
+		return;
+	}
     TArray<FName> RowNames = RecipeDataTable->GetRowNames();
 
     for (const FName& RowName : RowNames)
@@ -120,7 +128,7 @@ void AAApparatusActor::CheckForRecipe()
     }
 }
 
-void AAApparatusActor::AddIngredient(ABaseIngredient* Ingredient)
+void AApparatusActor::AddIngredient(ABaseIngredient* Ingredient)
 {
 	FName ItemID = Ingredient->ItemID;
 	if (CurrentIngredients.Contains(ItemID))
@@ -141,19 +149,17 @@ void AAApparatusActor::AddIngredient(ABaseIngredient* Ingredient)
 	}
 }
 
-void AAApparatusActor::RemoveIngredient(ABaseIngredient* Ingredient)
+void AApparatusActor::RemoveIngredient(ABaseIngredient* Ingredient)
 {
 	FName ItemID = Ingredient->ItemID;
 	
 	if (CurrentIngredients.Contains(ItemID))
 	{
 		CurrentIngredients[ItemID]--;
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Added Ingredient: " + ItemID.ToString()));
 	}
 	else
 	{
 		CurrentIngredients.Remove(ItemID);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Added Ingredient: " + ItemID.ToString()));
 	}
 	
 	CurrentIngredientActors.Remove(Ingredient);
@@ -165,7 +171,7 @@ void AAApparatusActor::RemoveIngredient(ABaseIngredient* Ingredient)
 	}
 }
 
-void AAApparatusActor::StartCookingProcess()
+void AApparatusActor::StartCookingProcess()
 {
 	if (CurrentRecipeData.OutputItemID != NAME_None && CurrentRecipeData.BaseCookTime > 0.0f)
 	{
@@ -174,7 +180,7 @@ void AAApparatusActor::StartCookingProcess()
 		GetWorldTimerManager().SetTimer(
 			CookingTimerHandle,
 			this,
-			&AAApparatusActor::FinishCooking,
+			&AApparatusActor::FinishCooking,
 			CurrentRecipeData.BaseCookTime,
 			false
 		);
@@ -193,7 +199,7 @@ void AAApparatusActor::StartCookingProcess()
 	}
 }
 
-void AAApparatusActor::FinishCooking()
+void AApparatusActor::FinishCooking()
 {
 	GetWorldTimerManager().ClearTimer(CookingTimerHandle);
 
@@ -234,7 +240,7 @@ void AAApparatusActor::FinishCooking()
 	}
 }
 
-void AAApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+void AApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor)
@@ -266,7 +272,7 @@ void AAApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedCom
 	}
 }
 
-void AAApparatusActor::OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+void AApparatusActor::OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if (OtherActor)

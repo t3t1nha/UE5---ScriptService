@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Player_Character.h"
-#include "Kitchen/AApparatusActor.h"
+#include "Kitchen/ApparatusActor.h"
 #include "Kitchen/Interface/GrabableInterface.h"
 
 // Sets default values
@@ -39,7 +39,6 @@ APlayer_Character::APlayer_Character()
 
 	// Create Physics Handle Component
 	PhysicsHandleComponent = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandleComponent"));
-	check(PhysicsHandleComponent != nullptr)
 
 	// Add Component to Character
 	AddInstanceComponent(PhysicsHandleComponent);
@@ -142,8 +141,8 @@ void APlayer_Character::Interact()
 		{
 			AActor* HitActor = Hit.GetActor();
 			
-			bool bisGrabable = HitActor->Implements<UGrabableInterface>();
-			if (bisGrabable)
+			const bool bIsGrabable = HitActor->Implements<UGrabableInterface>();
+			if (bIsGrabable)
 			{
 				UPrimitiveComponent* HitComponent = Hit.GetComponent();
 				FVector HitLocation = HitActor->GetActorLocation();
@@ -152,10 +151,9 @@ void APlayer_Character::Interact()
 				PhysicsHandleComponent->GrabComponentAtLocationWithRotation(HitComponent, FName("None") , HitLocation, HitRotation);
 				bIsHoldingItem = true;
 			}
-			else if (bool bisInteractable = HitActor->Implements<UInteractInterface>())
+			else if (HitActor->Implements<UInteractInterface>())
 			{
-				AAApparatusActor* InteractableItem = Cast<AAApparatusActor>(HitActor);
-				InteractableItem->Interact_Implementation();
+				IInteractInterface::Execute_Interact(HitActor);
 			}
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interact" + HitActor->GetName() + " hit"));
 		}
