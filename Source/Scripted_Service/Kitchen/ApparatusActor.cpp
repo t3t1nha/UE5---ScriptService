@@ -185,6 +185,23 @@ void AApparatusActor::StartCookingProcess()
 			false
 		);
 
+		const FVector ParticleLocation = DropZoneComponent->GetComponentLocation();
+		
+		if (CookingLoopParticles)
+		{
+			ActiveLoopParticles = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CookingLoopParticles, ParticleLocation);
+		}
+		
+		if (CookingStartSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, CookingStartSound, GetActorLocation());
+		}
+
+		if (CookingLoopSound)
+		{
+			ActiveLoopSound = UGameplayStatics::SpawnSoundAtLocation(this, CookingLoopSound, GetActorLocation());
+		}
+		
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Cooking Started"));
@@ -203,12 +220,31 @@ void AApparatusActor::FinishCooking()
 {
 	GetWorldTimerManager().ClearTimer(CookingTimerHandle);
 
+	if (ActiveLoopParticles)
+	{
+		ActiveLoopParticles->DeactivateSystem();
+		ActiveLoopParticles = nullptr;
+	}
+	
+	if (ActiveLoopSound)
+	{
+		if (CookingFinishSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, CookingFinishSound, GetActorLocation());
+		}
+		
+		ActiveLoopSound->Stop();
+		ActiveLoopSound = nullptr;
+	}
+	
 	if (CurrentRecipeData.OutputItemID != NAME_None)
 	{
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Cooking Finished"));
+
 		}
+		
 		if (!ItemBaseDataTable) return;
 
 		FItemBaseData* ItemData = ItemBaseDataTable->FindRow<FItemBaseData>(CurrentRecipeData.OutputItemID, TEXT("Spawning Output"));

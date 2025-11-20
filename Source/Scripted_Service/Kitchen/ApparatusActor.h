@@ -6,6 +6,11 @@
 #include "BaseIngredient.h"
 #include "GameFramework/Actor.h"
 #include "TimerManager.h"
+#include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
+#include "kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/DataTable.h"
@@ -57,6 +62,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	UDataTable* ItemBaseDataTable;
 
+	// VFX
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	UParticleSystem* CookingLoopParticles;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Effects")
+	UParticleSystemComponent* ActiveLoopParticles;
+
+	
+	
+	// SFX
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	USoundBase* CookingStartSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	USoundBase* CookingLoopSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	USoundBase* CookingFinishSound;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Effects")
+	UAudioComponent* ActiveLoopSound;	
+
+
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	TSubclassOf<class ABaseIngredient> IngredientBPClass;
 	
