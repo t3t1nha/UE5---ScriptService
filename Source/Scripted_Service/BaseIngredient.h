@@ -4,6 +4,7 @@
 
 #include "Interface/GrabableInterface.h"
 #include "CoreMinimal.h"
+#include "EnumTypes.h"
 #include "GameFramework/Actor.h"
 #include "BaseIngredient.generated.h"
 
@@ -29,12 +30,12 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
-	FName ItemID = NAME_None;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
+	EIngredientType IngredientType;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config")
-	UDataTable* ItemBaseDataTable;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
+	FName DisplayName;
 
-	UFUNCTION(BlueprintCallable, Category = "Visuals")
-	void UpdateVisuals();
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
+	FText Description;
 };

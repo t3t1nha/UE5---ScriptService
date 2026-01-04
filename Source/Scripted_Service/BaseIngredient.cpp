@@ -3,7 +3,6 @@
 
 #include "BaseIngredient.h"
 
-#include "CookingSystemTypes.h"
 
 // Sets default values
 ABaseIngredient::ABaseIngredient()
@@ -27,34 +26,10 @@ void ABaseIngredient::BeginPlay()
 void ABaseIngredient::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-
-	UpdateVisuals();
 }
 
 // Called every frame
 void ABaseIngredient::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
-
-void ABaseIngredient::UpdateVisuals()
-{
-	if (ItemID == NAME_None) return;
-	if (!ItemBaseDataTable)
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Data Table Not Set On ingredient"));
-		}
-		return;
-	}
-
-	FItemBaseData* Data = ItemBaseDataTable->FindRow<FItemBaseData>(ItemID, TEXT("IngredientVisualUpdate"));
-
-	if (Data && Data->Mesh)
-	{
-		ItemMeshComponent->SetStaticMesh(Data->Mesh);
-	}
-}
-

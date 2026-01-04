@@ -4,7 +4,7 @@
 
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "EnhancedInputComponent.h"
-#include "Kitchen/Interface/InteractInterface.h"
+#include "Interface/InteractInterface.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"

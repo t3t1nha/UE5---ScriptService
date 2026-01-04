@@ -46,14 +46,9 @@ void AApparatusActor::Interact_Implementation()
 void AApparatusActor::CheckForRecipe()
 {
     CurrentRecipeData = FRecipeData();
-    bool bRecipeFound = false;
 
 	if (!RecipeDataTable)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("RecipeDataTable not set on Apparatus"));
-		}
 		return;
 	}
     TArray<FName> RowNames = RecipeDataTable->GetRowNames();
@@ -69,7 +64,7 @@ void AApparatusActor::CheckForRecipe()
             }
 
             // Skip if the number of required ingredients doesn't match the current number
-            if (Recipe->RequiredIngredients.Num() != CurrentIngredients.Num()) // Changed > to !=
+            if (Recipe->RequiredIngredients.Num() != CurrentIngredients.Num())
             {
                 continue;
             }
@@ -79,16 +74,16 @@ void AApparatusActor::CheckForRecipe()
             // Check if all required ingredients are present with correct quantities
             for (const auto& RequiredElem : Recipe->RequiredIngredients)
             {
-                const FName& RequiredItemID = RequiredElem.Key;
+                const TSubclassOf<ABaseIngredient> RequiredIngredient = RequiredElem.Key;
                 const int32 RequiredQuantity = RequiredElem.Value;
 
-                if (!CurrentIngredients.Contains(RequiredItemID))
+                if (!CurrentIngredients.Contains(RequiredIngredient))
                 {
                     bIsMatch = false;
                     break;
                 }
 
-                if (RequiredQuantity != CurrentIngredients[RequiredItemID])
+                if (RequiredQuantity != CurrentIngredients[RequiredIngredient])
                 {
                     bIsMatch = false;
                     break;
@@ -111,33 +106,23 @@ void AApparatusActor::CheckForRecipe()
             if (bIsMatch)
             {
                 CurrentRecipeData = *Recipe;
-                bRecipeFound = true;
-                if (GEngine)
-                {
-                    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Recipe Found: ") + RowName.ToString());
-                }
-            	
                 break; // Exit loop if recipe was found
             }
         }
-    }
-
-    if (!bRecipeFound && GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("No Recipe Found"));
     }
 }
 
 void AApparatusActor::AddIngredient(ABaseIngredient* Ingredient)
 {
-	FName ItemID = Ingredient->ItemID;
-	if (CurrentIngredients.Contains(ItemID))
+	TSubclassOf<ABaseIngredient> IngredientClass = Ingredient->GetClass();
+	
+	if (CurrentIngredients.Contains(IngredientClass))
 	{
-		CurrentIngredients[ItemID]++;
+		CurrentIngredients[IngredientClass]++;
 	}
 	else
 	{
-		CurrentIngredients.Add(ItemID, 1);
+		CurrentIngredients.Add(IngredientClass, 1);
 	}
 	
 	CurrentIngredientActors.Add(Ingredient);
@@ -145,21 +130,21 @@ void AApparatusActor::AddIngredient(ABaseIngredient* Ingredient)
 
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Added Ingredient: " + ItemID.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Added Ingredient: " + Ingredient->GetName()));
 	}
 }
 
 void AApparatusActor::RemoveIngredient(ABaseIngredient* Ingredient)
 {
-	FName ItemID = Ingredient->ItemID;
+	TSubclassOf<ABaseIngredient> IngredientClass;
 	
-	if (CurrentIngredients.Contains(ItemID))
+	if (CurrentIngredients.Contains(IngredientClass))
 	{
-		CurrentIngredients[ItemID]--;
+		CurrentIngredients[IngredientClass]--;
 	}
 	else
 	{
-		CurrentIngredients.Remove(ItemID);
+		CurrentIngredients.Remove(IngredientClass);
 	}
 	
 	CurrentIngredientActors.Remove(Ingredient);
@@ -167,13 +152,13 @@ void AApparatusActor::RemoveIngredient(ABaseIngredient* Ingredient)
 
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Removed Ingredient: " + ItemID.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Removed Ingredient: " + Ingredient->GetName()));
 	}
 }
 
 void AApparatusActor::StartCookingProcess()
 {
-	if (CurrentRecipeData.OutputItemID != NAME_None && CurrentRecipeData.BaseCookTime > 0.0f)
+	if (CurrentRecipeData.OutputItemSubclass != nullptr && CurrentRecipeData.BaseCookTime > 0.0f)
 	{
 		GetWorldTimerManager().ClearTimer(CookingTimerHandle);
 
@@ -206,13 +191,8 @@ void AApparatusActor::StartCookingProcess()
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Cooking Started"));
 		}
-	} else if (GetWorldTimerManager().IsTimerActive(CookingTimerHandle))
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Cooking already in progress"));
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Cooking Not Started"));
+	} else {
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Cooking not started or in Progress"));
 	}
 }
 
@@ -237,33 +217,21 @@ void AApparatusActor::FinishCooking()
 		ActiveLoopSound = nullptr;
 	}
 	
-	if (CurrentRecipeData.OutputItemID != NAME_None)
+	if (CurrentRecipeData.OutputItemSubclass != nullptr)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Cooking Finished"));
+		// FItemBaseData* ItemData = ItemBaseDataTable->FindRow<FItemBaseData>(CurrentRecipeData.OutputItemID, TEXT("Spawning Output"));
 
+		FVector SpawnLocation;
+		
+		if (CurrentIngredientActors.Num() == 1)
+		{
+			SpawnLocation = CurrentIngredientActors[0]->GetActorLocation();
+		} else
+		{
+			SpawnLocation = DropZoneComponent->GetComponentLocation() + FVector(0.0f, 0.0f, 20.0f);
 		}
 		
-		if (!ItemBaseDataTable) return;
-
-		FItemBaseData* ItemData = ItemBaseDataTable->FindRow<FItemBaseData>(CurrentRecipeData.OutputItemID, TEXT("Spawning Output"));
-
-		if (ItemData && IngredientBPClass)
-		{
-			FVector SpawnLocation = DropZoneComponent->GetComponentLocation() + FVector(0.0f, 0.0f, 20.0f);
-
-			// Spawn generic object
-			ABaseIngredient* NewIngredient = GetWorld()->SpawnActor<ABaseIngredient>(IngredientBPClass, SpawnLocation, FRotator::ZeroRotator);
-
-			if (NewIngredient)
-			{
-				// Make correct ingredient
-				NewIngredient->ItemID = CurrentRecipeData.OutputItemID;
-
-				NewIngredient->UpdateVisuals();
-			}
-		}
+		GetWorld()->SpawnActor<ABaseIngredient>(CurrentRecipeData.OutputItemSubclass,SpawnLocation, FRotator::ZeroRotator);
 
 		for (ABaseIngredient* IngredientActor : CurrentIngredientActors)
 		{
@@ -285,18 +253,7 @@ void AApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComp
 
 		if (IngredientActor)
 		{
-			FName ItemID = IngredientActor->ItemID;
-
-			if (ItemID == NAME_None)
-			{
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Actor Does not have valid Item ID" + ItemID.ToString()));
-				}
-			} else
-			{
-				AddIngredient(IngredientActor);
-			}
+			AddIngredient(IngredientActor);
 		}
 	}
 	else
@@ -317,16 +274,7 @@ void AApparatusActor::OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedCompon
 
 		if (IngredientActor)
 		{
-			FName ItemID = IngredientActor->ItemID;
-
-			if (ItemID == NAME_None)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Actor Does not have valid Item ID" + ItemID.ToString()));
-			}
-			else
-			{
 				RemoveIngredient(IngredientActor);
-			}
 		}
 	}
 }

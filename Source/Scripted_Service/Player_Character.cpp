@@ -1,8 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Player_Character.h"
-#include "Kitchen/ApparatusActor.h"
-#include "Kitchen/Interface/GrabableInterface.h"
+#include "ApparatusActor.h"
 
 // Sets default values
 APlayer_Character::APlayer_Character()

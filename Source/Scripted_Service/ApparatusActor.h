@@ -15,7 +15,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/DataTable.h"
 #include "Interface/InteractInterface.h"
-#include "CookingSystemTypes.h"
+#include "StructTypes.h"
 #include "ApparatusActor.generated.h"
 
 class UStaticMesh;
@@ -51,16 +51,13 @@ protected:
 	EApparatusType ApparatusType = EApparatusType::Grill;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
-	TMap<FName, int32> CurrentIngredients;
+	TMap<TSubclassOf<ABaseIngredient> , int32> CurrentIngredients;
 
 	UPROPERTY(BlueprintReadonly, Category = "State", meta = (AllowPrivateAccess = "true"))
 	TArray<ABaseIngredient*> CurrentIngredientActors;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	UDataTable* RecipeDataTable;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
-	UDataTable* ItemBaseDataTable;
 
 	// VFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
@@ -84,10 +81,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Effects")
 	UAudioComponent* ActiveLoopSound;	
 
-
+	
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
-	TSubclassOf<class ABaseIngredient> IngredientBPClass;
+	TSubclassOf<ABaseIngredient> IngredientBPClass;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
 	FRecipeData CurrentRecipeData;
