@@ -40,3 +40,13 @@ enum class EIngredientType : uint8
 	CookedDish		UMETA(DisplayName = "Cooked Dish"),
 	Apparatus		UMETA(DisplayName = "Apparatus")
 };
+
+UENUM(BlueprintType)
+enum class EInstructionType : uint8
+{
+	MoveToTable,
+	MoveToKitchen,
+	TakeOrder,
+	DeliverOrder,
+	Wait
+};

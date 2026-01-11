@@ -29,3 +29,18 @@ struct FRecipeData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe Data")
 	float BaseCookTime = 5.0f;
 };
+
+USTRUCT(BlueprintType)
+struct FRobotInstruction
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EInstructionType InstructionType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 TargetTableNumber = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float WaitValue = 0.0f;
+};
