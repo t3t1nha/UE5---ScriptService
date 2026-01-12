@@ -31,6 +31,24 @@ struct FRecipeData : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
+struct FOrderData
+{
+	GENERATED_BODY()
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ABaseIngredient> RequestedDish;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EOrderState OrderState = EOrderState::Waiting;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 TableNumber = 0;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float TimeWaiting = 0.0f;
+};
+
+USTRUCT(BlueprintType)
 struct FRobotInstruction
 {
 	GENERATED_BODY()

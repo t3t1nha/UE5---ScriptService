@@ -42,11 +42,21 @@ enum class EIngredientType : uint8
 };
 
 UENUM(BlueprintType)
+enum class EOrderState : uint8
+{
+	Waiting     UMETA(DisplayName = "Waiting"),
+	Taken       UMETA(DisplayName = "Taken"),
+	Ready       UMETA(DisplayName = "Ready"),
+	Delivered   UMETA(DisplayName = "Delivered")
+};
+
+UENUM(BlueprintType)
 enum class EInstructionType : uint8
 {
 	MoveToTable,
 	MoveToKitchen,
 	TakeOrder,
+	PickupFood,
 	DeliverOrder,
 	Wait
 };

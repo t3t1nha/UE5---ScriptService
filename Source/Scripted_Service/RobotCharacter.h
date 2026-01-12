@@ -31,7 +31,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Program)
 	int32 CurrentInstructionIndex = 0;
-
+	
+	UFUNCTION(BlueprintCallable, Category = "Order")
+	void TakeOrderFromTable(int32 TableNumber);
+    
+	UFUNCTION(BlueprintCallable, Category = "Order")
+	void PickupDishFromCounter();
+    
+	UFUNCTION(BlueprintCallable, Category = "Order")
+	void DeliverDishToTable();
+	
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = Program)
 	void ExecuteProgram();
 
@@ -43,4 +52,16 @@ protected:
 
 	UPROPERTY()
 	ARobotAIController* RobotController;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Order")
+	FOrderData CurrentOrder;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Order")
+	TSubclassOf<ABaseIngredient> CarryingDish;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Order")
+	bool bIsCarryingDish = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Location")
+	bool IsNearActor(AActor* TargetActor, float Distance = 200.0f);
 };

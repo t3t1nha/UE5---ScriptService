@@ -4,12 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "TableManager.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "RobotAIController.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class SCRIPTED_SERVICE_API ARobotAIController : public AAIController
 {
@@ -26,4 +24,9 @@ public:
 	
 protected:
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
+
+	UPROPERTY()
+	ATableManager* TableManager;
+    
+	void FindTableManager();
 };
