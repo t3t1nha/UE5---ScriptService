@@ -49,6 +49,30 @@ struct FOrderData
 };
 
 USTRUCT(BlueprintType)
+struct FBlockData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EInstructionType InstructionType;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText DisplayName;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FLinearColor BlockColor = FLinearColor::White;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Category = "Movement"; // "Movement", "Actions", "Logic"
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasTableParameter = false;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasWaitParameter = false;
+};
+
+USTRUCT(BlueprintType)
 struct FRobotInstruction
 {
 	GENERATED_BODY()

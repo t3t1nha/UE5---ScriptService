@@ -136,15 +136,16 @@ void AApparatusActor::AddIngredient(ABaseIngredient* Ingredient)
 
 void AApparatusActor::RemoveIngredient(ABaseIngredient* Ingredient)
 {
-	TSubclassOf<ABaseIngredient> IngredientClass;
+	TSubclassOf<ABaseIngredient> IngredientClass = Ingredient->GetClass();
 	
 	if (CurrentIngredients.Contains(IngredientClass))
 	{
 		CurrentIngredients[IngredientClass]--;
-	}
-	else
-	{
-		CurrentIngredients.Remove(IngredientClass);
+
+		if (CurrentIngredients[IngredientClass] <= 0)
+		{
+			CurrentIngredients.Remove(IngredientClass);
+		}
 	}
 	
 	CurrentIngredientActors.Remove(Ingredient);
