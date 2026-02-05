@@ -32,9 +32,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Kitchen")
 	FVector KitchenLocation = FVector::ZeroVector;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Kitchen")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Kitchen")
 	AKitchenCounter* KitchenCounter;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Kitchen")
 	AKitchenCounter* GetKitchenCounter() const;
 
