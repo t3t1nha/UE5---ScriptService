@@ -18,6 +18,9 @@ public:
 	// Sets default values for this actor's properties
 	ATableActor();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaticMeshComponent* TableMesh;
+	
 	// Table identification
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Table")
 	int32 TableNumber;
@@ -29,6 +32,7 @@ public:
 	// IOrderable Interface Implementation
 	virtual bool HasPendingOrder() const override;
 	virtual FOrderData GetCurrentOrder() const override;
+	UFUNCTION(BlueprintCallable)
 	virtual void PlaceOrder(TSubclassOf<class ABaseIngredient> Dish) override;
 	virtual bool DeliverOrder(TSubclassOf<class ABaseIngredient> Dish) override;
 	virtual FVector GetInteractionLocation() const override;

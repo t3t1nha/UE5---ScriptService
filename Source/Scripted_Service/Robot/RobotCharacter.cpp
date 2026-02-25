@@ -2,6 +2,10 @@
 
 #include "RobotCharacter.h"
 #include "RobotAIController.h"
+#include "Commands/MoveCommand.h"
+#include "Commands/TakeOrderCommand.h"
+#include "Commands/PickupCommand.h"
+#include "Commands/DeliverCommand.h"
 #include "TableManager.h"
 #include "TableActor.h"
 #include "KitchenCounter.h"
@@ -67,15 +71,17 @@ void ARobotCharacter::LoadProgram(const TArray<FRobotInstruction>& Instructions)
 
 void ARobotCharacter::ExecuteProgram()
 {
+    UE_LOG(LogTemp, Warning, TEXT("=== EXECUTE PROGRAM CALLED ==="));
+    
     if (CurrentProgram.Num() == 0)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: No program to execute"));
+        UE_LOG(LogTemp, Error, TEXT("Robot: No program to execute"));
         return;
     }
     
     if (bIsExecuting && !bIsPaused)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: Already executing program"));
+        UE_LOG(LogTemp, Error, TEXT("Robot: Already executing program"));
         return;
     }
     
@@ -83,20 +89,41 @@ void ARobotCharacter::ExecuteProgram()
     if (!bIsPaused)
     {
         CurrentInstructionIndex = 0;
+        CurrentCommandIndex = 0;
         CurrentOrder = FOrderData();
         CarryingDish = nullptr;
+        CommandQueue.Empty();
         
-        UE_LOG(LogTemp, Log, TEXT("Robot: Starting fresh program execution"));
-    }
-    else
-    {
-        UE_LOG(LogTemp, Log, TEXT("Robot: Resuming program execution"));
+        UE_LOG(LogTemp, Warning, TEXT("Creating commands from %d instructions"), CurrentProgram.Num());
+        
+        // Convert ALL instructions to commands upfront
+        for (int32 i = 0; i < CurrentProgram.Num(); i++)
+        {
+            const FRobotInstruction& Instruction = CurrentProgram[i];
+            UE_LOG(LogTemp, Warning, TEXT("  Instruction %d: Type %d"), i, (int32)Instruction.InstructionType);
+            
+            URobotCommand* Command = CreateCommandFromInstruction(Instruction);
+            if (Command)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("    -> Created command: %s"), *Command->GetDisplayName());
+                CommandQueue.Add(Command);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("    -> FAILED to create command!"));
+                return;
+            }
+        }
+        
+        UE_LOG(LogTemp, Warning, TEXT("Successfully converted %d instructions to %d commands"), 
+            CurrentProgram.Num(), CommandQueue.Num());
     }
     
     bIsExecuting = true;
     bIsPaused = false;
     
-    ExecuteNextInstruction();
+    UE_LOG(LogTemp, Warning, TEXT("Starting command execution"));
+    ExecuteNextCommand();
 }
 
 void ARobotCharacter::StopProgram()
@@ -162,7 +189,7 @@ void ARobotCharacter::ResumeProgram()
     
     bIsPaused = false;
     UE_LOG(LogTemp, Log, TEXT("Robot: Program resumed from instruction %d"), CurrentInstructionIndex);
-    ExecuteNextInstruction();
+    ExecuteNextCommand();
 }
 
 bool ARobotCharacter::IsProgramRunning() const
@@ -183,370 +210,204 @@ int32 ARobotCharacter::GetProgramLength() const
 /**
  *INSTRUCTION EXECUTION
  */
-void ARobotCharacter::ExecuteNextInstruction()
+void ARobotCharacter::OnMovementComplete()
 {
-    // Check if program is paused
-    if (bIsPaused)
+    UE_LOG(LogTemp, Log, TEXT("Robot: Movement complete"));
+}
+
+void ARobotCharacter::LoadDemoProgram()
+{
+    CurrentProgram.Empty();
+    
+    // Demo: Take order from Table 1, pick up food, deliver
+    FRobotInstruction MoveToTable1;
+    MoveToTable1.InstructionType = EInstructionType::MoveToTable;
+    MoveToTable1.TargetTableNumber = 1;
+    CurrentProgram.Add(MoveToTable1);
+    
+    FRobotInstruction TakeOrder;
+    TakeOrder.InstructionType = EInstructionType::TakeOrder;
+    TakeOrder.TargetTableNumber = 1;
+    CurrentProgram.Add(TakeOrder);
+    
+    FRobotInstruction MoveToKitchen;
+    MoveToKitchen.InstructionType = EInstructionType::MoveToKitchen;
+    CurrentProgram.Add(MoveToKitchen);
+    
+    FRobotInstruction PickupFood;
+    PickupFood.InstructionType = EInstructionType::PickupFood;
+    CurrentProgram.Add(PickupFood);
+    
+    FRobotInstruction MoveBackToTable;
+    MoveBackToTable.InstructionType = EInstructionType::MoveToTable;
+    MoveBackToTable.TargetTableNumber = 1;
+    CurrentProgram.Add(MoveBackToTable);
+    
+    FRobotInstruction Deliver;
+    Deliver.InstructionType = EInstructionType::DeliverOrder;
+    CurrentProgram.Add(Deliver);
+    
+    UE_LOG(LogTemp, Log, TEXT("Demo program loaded: %d instructions"), CurrentProgram.Num());
+    
+    if (GEngine)
     {
-        UE_LOG(LogTemp, Log, TEXT("Robot: Execution paused"));
-        return;
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, 
+            FString::Printf(TEXT("Demo Program Loaded! (%d instructions)"), CurrentProgram.Num()));
     }
+}
+
+void ARobotCharacter::ClearProgram()
+{
+    CurrentProgram.Empty();
+    CurrentInstructionIndex = 0;
+    bIsExecuting = false;
     
-    // Check if we've finished the program
-    if (CurrentInstructionIndex >= CurrentProgram.Num())
+    if (GEngine)
     {
-        UE_LOG(LogTemp, Log, TEXT("Robot: Program execution complete!"));
-        bIsExecuting = false;
-        return;
+        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Program Cleared"));
     }
-    
-    const FRobotInstruction& Instruction = CurrentProgram[CurrentInstructionIndex];
-    
-    UE_LOG(LogTemp, Log, TEXT("Robot: Executing instruction %d of %d"), 
-        CurrentInstructionIndex + 1, 
-        CurrentProgram.Num());
+}
+
+
+URobotCommand* ARobotCharacter::CreateCommandFromInstruction(const FRobotInstruction& Instruction)
+{
+    URobotCommand* Command = nullptr;
     
     switch (Instruction.InstructionType)
     {
         case EInstructionType::MoveToTable:
         {
-            if (!TableManager)
-            {
-                UE_LOG(LogTemp, Error, TEXT("Robot: Cannot move to table - No TableManager!"));
-                bIsExecuting = false;
-                return;
-            }
-            
-            ATableActor* Table = TableManager->FindTableByNumber(Instruction.TargetTableNumber);
-            if (!Table)
-            {
-                UE_LOG(LogTemp, Error, TEXT("Robot: Table %d not found!"), Instruction.TargetTableNumber);
-                bIsExecuting = false;
-                return;
-            }
-            
-            // Use interface to get location
-            IOrderable* Orderable = Cast<IOrderable>(Table);
-            if (Orderable)
-            {
-                FVector TargetLocation = Orderable->GetInteractionLocation();
-                
-                ARobotAIController* AIController = Cast<ARobotAIController>(GetController());
-                if (AIController)
-                {
-                    AIController->MoveToLocation(TargetLocation);
-                }
-            }
+            UMoveCommand* MoveCmd = NewObject<UMoveCommand>(this);
+            MoveCmd->InitializeMoveToTable(this, Instruction.TargetTableNumber);
+            Command = MoveCmd;
             break;
         }
         
         case EInstructionType::MoveToKitchen:
         {
-            if (!TableManager)
-            {
-                UE_LOG(LogTemp, Error, TEXT("Robot: Cannot move to kitchen - No TableManager!"));
-                bIsExecuting = false;
-                return;
-            }
-            
-            FVector KitchenLocation = TableManager->GetKitchenLocation();
-            
-            ARobotAIController* AIController = Cast<ARobotAIController>(GetController());
-            if (AIController)
-            {
-                AIController->MoveToLocation(KitchenLocation);
-            }
+            UMoveCommand* MoveCmd = NewObject<UMoveCommand>(this);
+            MoveCmd->InitializeMoveToKitchen(this);
+            Command = MoveCmd;
             break;
         }
         
         case EInstructionType::TakeOrder:
         {
-            TakeOrderFromTable(Instruction.TargetTableNumber);
+            UTakeOrderCommand* TakeCmd = NewObject<UTakeOrderCommand>(this);
+            TakeCmd->InitializeTakeOrder(this, Instruction.TargetTableNumber);
+            Command = TakeCmd;
             break;
         }
-        
+
         case EInstructionType::PickupFood:
         {
-            PickupDishFromCounter();
+            UPickupCommand* PickupCmd = NewObject<UPickupCommand>(this);
+            PickupCmd->InitializePickup(this);
+            Command = PickupCmd;
             break;
         }
-        
+
         case EInstructionType::DeliverOrder:
         {
-            DeliverDishToTable();
+            UDeliverCommand* DeliverCmd = NewObject<UDeliverCommand>(this);
+            DeliverCmd->InitializeDeliver(this);
+            Command = DeliverCmd;
             break;
         }
         
         case EInstructionType::Wait:
         {
-            WaitForDuration(Instruction.WaitValue);
-            break;
-        }
-        
-        default:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Robot: Unknown instruction type"));
-            CurrentInstructionIndex++;
-            ExecuteNextInstruction();
+            // TODO: Create WaitCommand class (for now, use old way)
+            UE_LOG(LogTemp, Warning, TEXT("Wait command not implemented yet"));
             break;
         }
     }
+    
+    if (Command)
+    {
+        // Bind callbacks
+        Command->OnComplete.BindUObject(this, &ARobotCharacter::OnCommandComplete);
+        Command->OnError.BindUObject(this, &ARobotCharacter::OnCommandError);
+    }
+    
+    return Command;
 }
 
-void ARobotCharacter::OnMovementComplete()
+void ARobotCharacter::ExecuteNextCommand()
 {
-    UE_LOG(LogTemp, Log, TEXT("Robot: Movement complete"));
+        UE_LOG(LogTemp, Warning, TEXT("=== EXECUTE NEXT COMMAND ==="));
+        UE_LOG(LogTemp, Warning, TEXT("Paused: %s"), bIsPaused ? TEXT("YES") : TEXT("NO"));
+        UE_LOG(LogTemp, Warning, TEXT("Command Index: %d / %d"), CurrentCommandIndex, CommandQueue.Num());
     
-    // Move to next instruction
-    CurrentInstructionIndex++;
-    ExecuteNextInstruction();
-}
-
-// ============================================================================
-// ACTION FUNCTIONS
-// ============================================================================
-
-void ARobotCharacter::TakeOrderFromTable(int32 TableNumber)
-{
-    if (!TableManager)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Cannot take order - No TableManager!"));
-        return;
-    }
+        if (bIsPaused)
+        {
+            UE_LOG(LogTemp, Log, TEXT("Robot: Execution paused"));
+            return;
+        }
     
-    // Find the table
-    ATableActor* Table = TableManager->FindTableByNumber(TableNumber);
-    if (!Table)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Table %d not found!"), TableNumber);
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Cast to interface
-    IOrderable* Orderable = Cast<IOrderable>(Table);
-    if (!Orderable)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Table does not implement IOrderable!"));
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Check if robot is close enough to table
-    FVector TableLocation = Orderable->GetInteractionLocation();
-    float Distance = FVector::Dist(GetActorLocation(), TableLocation);
-    
-    if (Distance > 300.0f)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: Too far from table %d (Distance: %.2f)"), 
-            TableNumber, Distance);
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Check if table has an order
-    if (!Orderable->HasPendingOrder())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: Table %d has no pending order"), TableNumber);
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Take the order
-    CurrentOrder = Orderable->GetCurrentOrder();
-    CurrentOrder.OrderState = EOrderState::Taken;
-    
-    UE_LOG(LogTemp, Log, TEXT("Robot: Took order from table %d"), TableNumber);
-    
-    // Continue to next instruction
-    CurrentInstructionIndex++;
-    ExecuteNextInstruction();
-}
-
-void ARobotCharacter::PickupDishFromCounter()
-{
-    if (!TableManager)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Cannot pickup dish - No TableManager!"));
-        return;
-    }
-    
-    AKitchenCounter* Counter = TableManager->GetKitchenCounter();
-    if (!Counter)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: No kitchen counter found!"));
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Cast to interface
-    IPickupPoint* PickupPoint = Cast<IPickupPoint>(Counter);
-    if (!PickupPoint)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Counter does not implement IPickupPoint!"));
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Check if robot is close enough to counter
-    FVector CounterLocation = PickupPoint->GetPickupLocation();
-    float Distance = FVector::Dist(GetActorLocation(), CounterLocation);
-    
-    if (Distance > 300.0f)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: Too far from counter (Distance: %.2f)"), Distance);
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Check if we have an order to fulfill
-    if (!CurrentOrder.RequestedDish)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: No order to pickup dish for"));
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Check if the required dish is available
-    if (!PickupPoint->HasItem(CurrentOrder.RequestedDish))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: Required dish not available on counter"));
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Pickup the dish
-    if (PickupPoint->PickupItem(CurrentOrder.RequestedDish))
-    {
-        CarryingDish = CurrentOrder.RequestedDish;
-        CurrentOrder.OrderState = EOrderState::Ready;
+        // Check if we've finished all commands
+        if (CurrentCommandIndex >= CommandQueue.Num())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("=== ALL COMMANDS COMPLETE ==="));
+            bIsExecuting = false;
         
-        UE_LOG(LogTemp, Log, TEXT("Robot: Picked up dish from counter"));
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Failed to pickup dish"));
-    }
+            if (GEngine)
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, 
+                    TEXT("Program Complete!"));
+            }
+            return;
+        }
     
-    // Continue to next instruction
-    CurrentInstructionIndex++;
-    ExecuteNextInstruction();
-}
-
-void ARobotCharacter::DeliverDishToTable()
-{
-    if (!TableManager)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Cannot deliver dish - No TableManager!"));
-        return;
-    }
+        URobotCommand* Command = CommandQueue[CurrentCommandIndex];
     
-    // Check if robot is carrying a dish
-    if (!CarryingDish)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: Not carrying any dish to deliver"));
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
+        UE_LOG(LogTemp, Warning, TEXT("Executing command: %s"), *Command->GetDisplayName());
     
-    // Find the table for this order
-    ATableActor* Table = TableManager->FindTableByNumber(CurrentOrder.TableNumber);
-    if (!Table)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Table %d not found!"), CurrentOrder.TableNumber);
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Cast to interface
-    IOrderable* Orderable = Cast<IOrderable>(Table);
-    if (!Orderable)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Table does not implement IOrderable!"));
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Check if robot is close enough to table
-    FVector TableLocation = Orderable->GetInteractionLocation();
-    float Distance = FVector::Dist(GetActorLocation(), TableLocation);
-    
-    if (Distance > 300.0f)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: Too far from table %d (Distance: %.2f)"), 
-            CurrentOrder.TableNumber, Distance);
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
-    }
-    
-    // Attempt delivery using interface
-    bool bDeliverySuccessful = Orderable->DeliverOrder(CarryingDish);
-    
-    if (bDeliverySuccessful)
-    {
-        UE_LOG(LogTemp, Log, TEXT("Robot: Successfully delivered correct dish to table %d"), 
-            CurrentOrder.TableNumber);
-        
         if (GEngine)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
-                FString::Printf(TEXT("Correct dish delivered to table %d!"), CurrentOrder.TableNumber));
+            GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, 
+                FString::Printf(TEXT("Executing: %s"), *Command->GetDisplayName()));
         }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Robot: Delivered wrong dish to table %d"), 
-            CurrentOrder.TableNumber);
-        
-        if (GEngine)
+    
+        // Validate before executing
+        UE_LOG(LogTemp, Warning, TEXT("Validating command..."));
+        if (!Command->CanExecute())
         {
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
-                FString::Printf(TEXT("Wrong dish delivered to table %d!"), CurrentOrder.TableNumber));
+            FString Error = Command->GetErrorMessage();
+            UE_LOG(LogTemp, Error, TEXT("VALIDATION FAILED: %s"), *Error);
+            OnCommandError(Error);
+            return;
         }
+    
+        UE_LOG(LogTemp, Warning, TEXT("Validation passed, executing..."));
+    
+        // Execute the command
+        Command->Execute();
+    
+        UE_LOG(LogTemp, Warning, TEXT("Execute() called, waiting for callback..."));
     }
+
+void ARobotCharacter::OnCommandComplete()
+{
+    UE_LOG(LogTemp, Log, TEXT("Robot: Command completed successfully"));
     
-    // Clear robot inventory
-    CarryingDish = nullptr;
-    CurrentOrder = FOrderData();
+    // Move to next command
+    CurrentCommandIndex++;
+    CurrentInstructionIndex = CurrentCommandIndex;
     
-    // Continue to next instruction
-    CurrentInstructionIndex++;
-    ExecuteNextInstruction();
+    ExecuteNextCommand();
 }
 
-void ARobotCharacter::WaitForDuration(float Seconds)
+void ARobotCharacter::OnCommandError(FString ErrorMessage)
 {
-    if (Seconds <= 0.0f)
+    UE_LOG(LogTemp, Error, TEXT("Robot: Command failed - %s"), *ErrorMessage);
+    
+    if (GEngine)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Robot: Invalid wait duration: %.2f"), Seconds);
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-        return;
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, 
+            FString::Printf(TEXT("ERROR: %s"), *ErrorMessage));
     }
     
-    UE_LOG(LogTemp, Log, TEXT("Robot: Waiting for %.2f seconds"), Seconds);
-    
-    // Set timer to continue after wait
-    FTimerDelegate TimerDelegate;
-    TimerDelegate.BindLambda([this]()
-    {
-        UE_LOG(LogTemp, Log, TEXT("Robot: Wait complete"));
-        CurrentInstructionIndex++;
-        ExecuteNextInstruction();
-    });
-    
-    GetWorldTimerManager().SetTimer(WaitTimerHandle, TimerDelegate, Seconds, false);
+    // Stop execution
+    bIsExecuting = false;
 }

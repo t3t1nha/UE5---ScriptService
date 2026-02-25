@@ -7,6 +7,9 @@ ATableActor::ATableActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	TableNumber = 0;
+
+	TableMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TableMesh"));
+	RootComponent = TableMesh;
 }
 
 void ATableActor::BeginPlay()
@@ -53,13 +56,6 @@ void ATableActor::PlaceOrder(TSubclassOf<ABaseIngredient> Dish)
 
 bool ATableActor::DeliverOrder(TSubclassOf<ABaseIngredient> Dish)
 {
-	if (CurrentOrder.OrderState != EOrderState::Taken && 
-		CurrentOrder.OrderState != EOrderState::Ready)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Table %d: No order to deliver"), TableNumber);
-		return false;
-	}
-    
 	// Check if delivered dish matches order
 	if (Dish == CurrentOrder.RequestedDish)
 	{
@@ -76,9 +72,7 @@ bool ATableActor::DeliverOrder(TSubclassOf<ABaseIngredient> Dish)
 
 FVector ATableActor::GetInteractionLocation() const
 {
-	// Return location in front of table (offset by 100cm)
-	FVector Forward = GetActorForwardVector();
-	return GetActorLocation() + (Forward * 100.0f);
+	return GetActorLocation();
 }
 
 int32 ATableActor::GetOrderableID() const

@@ -16,6 +16,9 @@ public:
 	AKitchenCounter();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaticMeshComponent* CounterMesh;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UBoxComponent* PickupZone;
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Counter")

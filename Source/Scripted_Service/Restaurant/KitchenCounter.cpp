@@ -6,9 +6,12 @@
 AKitchenCounter::AKitchenCounter()
 {
     PrimaryActorTick.bCanEverTick = false;
+
+    CounterMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CounterMesh"));
+    RootComponent = CounterMesh;
     
     PickupZone = CreateDefaultSubobject<UBoxComponent>(TEXT("PickupZone"));
-    RootComponent = PickupZone;
+    RootComponent->SetupAttachment(RootComponent);
     PickupZone->SetBoxExtent(FVector(100.0f, 100.0f, 50.0f));
 }
 

@@ -104,12 +104,20 @@ void UTakeOrderCommand::Execute()
 	FOrderData Order = Orderable->GetCurrentOrder();
 	Order.OrderState = EOrderState::Taken;
     
-	// Store in robot (access via public member)
+	// Store in robot
 	OwningRobot->CurrentOrder = Order;
     
-	UE_LOG(LogTemp, Log, TEXT("TakeOrderCommand: Took order from table %d"), TableNumber);
-    
-	// Complete immediately (no async operation)
+	FString DishName = (Order.RequestedDish) ? Order.RequestedDish->GetDisplayNameText().ToString() : TEXT("None");
+
+	UE_LOG(LogTemp, Log, TEXT("TakeOrderCommand: Took order from table %d %s"), TableNumber, *DishName);
+	
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, 
+			FString::Printf(TEXT("Order taken from Table %d!"), TableNumber));
+	}
+	
+	// Complete immediately
 	CompleteCommand();
 }
 
