@@ -4,7 +4,8 @@
 
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "EnhancedInputComponent.h"
-#include "Interface/InteractInterface.h"
+#include "InteractInterface.h"
+#include "ProgrammingMenu.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
@@ -50,6 +51,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* InteractAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* ToggleMenuAction;
+	
 	// Physics Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UPhysicsHandleComponent* PhysicsHandleComponent;
@@ -63,6 +67,8 @@ public:
 	void Look(const FInputActionValue& Value);
 	UFUNCTION()
 	void Interact();
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ToggleMenu();
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	UCameraComponent* FirstPersonCameraComponent;
@@ -93,4 +99,17 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
 	bool bIsHoldingItem;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UProgrammingMenu> ProgrammingMenuClass;
+
+	/**
+	 * Live instance of the programming menu.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "UI")
+	UProgrammingMenu* ProgrammingMenuInstance;
+
+	/** True while the programming menu is open. Blueprint-readable. */
+	UPROPERTY(BlueprintReadOnly, Category = "UI")
+	bool bIsMenuOpen = false;
 };

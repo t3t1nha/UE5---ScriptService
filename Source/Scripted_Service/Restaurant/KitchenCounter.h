@@ -22,13 +22,13 @@ public:
 	UBoxComponent* PickupZone;
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Counter")
-	TArray<TSubclassOf<class ABaseIngredient>> AvailableDishes;
+	TArray<TSubclassOf<ABaseIngredient>> AvailableDishes;
     
 	// IPickupPoint Interface Implementation
-	virtual bool HasItem(TSubclassOf<class ABaseIngredient> ItemClass) const override;
-	virtual bool PickupItem(TSubclassOf<class ABaseIngredient> ItemClass) override;
+	virtual bool HasItem(TSubclassOf<ABaseIngredient> ItemClass) const override;
+	virtual bool PickupItem(TSubclassOf<ABaseIngredient> ItemClass) override;
 	virtual FVector GetPickupLocation() const override;
-	virtual TArray<TSubclassOf<class ABaseIngredient>> GetAvailableItems() const override;
+	virtual TArray<TSubclassOf<ABaseIngredient>> GetAvailableItems() const override;
 
 protected:
 	virtual void BeginPlay() override;

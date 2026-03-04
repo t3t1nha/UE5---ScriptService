@@ -220,16 +220,14 @@ void AApparatusActor::FinishCooking()
 	
 	if (CurrentRecipeData.OutputItemSubclass != nullptr)
 	{
-		// FItemBaseData* ItemData = ItemBaseDataTable->FindRow<FItemBaseData>(CurrentRecipeData.OutputItemID, TEXT("Spawning Output"));
-
-		FVector SpawnLocation;
+		FVector SpawnLocation, Offset = FVector(0.0f, 0.0f, 20.0f);
 		
 		if (CurrentIngredientActors.Num() == 1)
 		{
-			SpawnLocation = CurrentIngredientActors[0]->GetActorLocation();
+			SpawnLocation = CurrentIngredientActors[0]->GetActorLocation() + Offset;
 		} else
 		{
-			SpawnLocation = DropZoneComponent->GetComponentLocation() + FVector(0.0f, 0.0f, 20.0f);
+			SpawnLocation = DropZoneComponent->GetComponentLocation() + Offset;
 		}
 		
 		GetWorld()->SpawnActor<ABaseIngredient>(CurrentRecipeData.OutputItemSubclass,SpawnLocation, FRotator::ZeroRotator);

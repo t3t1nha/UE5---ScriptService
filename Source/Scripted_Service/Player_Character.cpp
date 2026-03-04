@@ -55,6 +55,25 @@ void APlayer_Character::BeginPlay()
 			Subsystem->AddMappingContext(InputMappingContext, 0);
 		}
 	}
+
+	if (ProgrammingMenuClass)
+	{
+		ProgrammingMenuInstance = CreateWidget<UProgrammingMenu>(GetWorld(), ProgrammingMenuClass);
+
+		if (ProgrammingMenuInstance)
+		{
+			// ZOrder 10 keeps it above most other HUD elements
+			ProgrammingMenuInstance->AddToViewport(10);
+
+			// Start hidden — HideMenu sets Collapsed and bIsOpen = false
+			ProgrammingMenuInstance->HideMenu();
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player_Character: ProgrammingMenuClass is not set! "
+			"Assign WBP_ProgrammingMenu in the Blueprint defaults."));
+	}
 }
 
 // Called every frame
@@ -75,6 +94,8 @@ void APlayer_Character::Tick(float DeltaTime)
 
 void APlayer_Character::Move(const FInputActionValue& Value)
 {
+	if (bIsMenuOpen) return;
+	
 	const FVector2D MovementValue = Value.Get<FVector2D>();
 
 	if (Controller)
@@ -91,6 +112,8 @@ void APlayer_Character::Move(const FInputActionValue& Value)
 
 void APlayer_Character::Look(const FInputActionValue& Value)
 {
+	if (bIsMenuOpen) return;
+	
 	const FVector2D LookAxisValue = Value.Get<FVector2D>();
 
 	if (Controller)
@@ -102,6 +125,8 @@ void APlayer_Character::Look(const FInputActionValue& Value)
 
 void APlayer_Character::Interact()
 {
+	if (bIsMenuOpen) return;
+	
 	FVector WorldLocation = FirstPersonCameraComponent->GetComponentLocation();
 	FVector Forward = FirstPersonCameraComponent->GetForwardVector();
 
@@ -145,6 +170,54 @@ void APlayer_Character::Interact()
 	}
 }
 
+void APlayer_Character::ToggleMenu()
+{
+	if (!ProgrammingMenuInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player_Character::ToggleMenu — "
+			"ProgrammingMenuInstance is null. Did you set ProgrammingMenuClass?"));
+		return;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(Controller);
+	if (!PC)
+	{
+		return;
+	}
+
+	if (bIsMenuOpen)
+	{
+		// CLOSE MENU
+		// Hide the widget, restore Game-Only input, hide cursor
+		ProgrammingMenuInstance->HideMenu();
+		bIsMenuOpen = false;
+
+		// FInputModeGameOnly: mouse is captured, no cursor, full game input.
+		FInputModeGameOnly GameInputMode;
+		PC->SetInputMode(GameInputMode);
+		PC->bShowMouseCursor = false;
+
+		UE_LOG(LogTemp, Log, TEXT("Programming menu closed — game input restored"));
+	}
+	else
+	{
+		// OPEN MENU
+		// Show the widget, switch to UI-Only input, show cursor
+		ProgrammingMenuInstance->ShowMenu();
+		bIsMenuOpen = true;
+
+		// FInputModeUIOnly: all input goes to the widget, camera does NOT
+		// move while the menu is open
+		FInputModeGameAndUI GameAndUIMode;
+		GameAndUIMode.SetWidgetToFocus(ProgrammingMenuInstance->TakeWidget());
+		GameAndUIMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PC->SetInputMode(GameAndUIMode);
+		PC->bShowMouseCursor = true;
+
+		UE_LOG(LogTemp, Log, TEXT("Programming menu opened — UI input mode active"));
+	}
+}
+
 // Called to bind functionality to input
 void APlayer_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -160,5 +233,7 @@ void APlayer_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		EnhancedInputComponent->BindAction(ToggleMenuAction, ETriggerEvent::Started,   this, &APlayer_Character::ToggleMenu);
 	}
 }
