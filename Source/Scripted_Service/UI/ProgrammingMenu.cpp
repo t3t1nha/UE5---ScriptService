@@ -5,22 +5,12 @@
 #include "EngineUtils.h"
 #include "Components/WrapBoxSlot.h"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// UUserWidget Overrides
-// ─────────────────────────────────────────────────────────────────────────────
-
 void UProgrammingMenu::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	// Fill the palette immediately so blocks are ready before the player opens
-	// the menu for the first time.
 	PopulatePalette();
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Menu Visibility
-// ─────────────────────────────────────────────────────────────────────────────
 
 void UProgrammingMenu::ShowMenu_Implementation()
 {
