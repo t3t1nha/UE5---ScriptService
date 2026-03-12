@@ -28,10 +28,6 @@ void UProgrammingMenu::HideMenu_Implementation()
 	UE_LOG(LogTemp, Log, TEXT("ProgrammingMenu: Menu closed"));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Robot Reference
-// ─────────────────────────────────────────────────────────────────────────────
-
 void UProgrammingMenu::SetTargetRobot(ARobotCharacter* InRobot)
 {
 	TargetRobot = InRobot;
@@ -54,10 +50,6 @@ void UProgrammingMenu::SetTargetRobot(ARobotCharacter* InRobot)
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Palette
-// ─────────────────────────────────────────────────────────────────────────────
-
 void UProgrammingMenu::PopulatePalette()
 {
 	if (!PaletteBox)
@@ -78,6 +70,11 @@ void UProgrammingMenu::PopulatePalette()
 
 	// Clear any previously created palette entries before rebuilding
 	PaletteBox->ClearChildren();
+
+	if (SequenceWidget)
+	{
+		SequenceWidget->ContainerBlockWidgetClass = ContainerBlockWidgetClass;
+	}
 
 	// Fetch the canonical list of available instruction blocks
 	const TArray<FBlockData> DefaultBlocks = UBlockLibrary::GetDefaultBlocks();
@@ -110,10 +107,6 @@ void UProgrammingMenu::PopulatePalette()
 		TEXT("ProgrammingMenu: Palette populated with %d block(s)"),
 		DefaultBlocks.Num());
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Program Controls
-// ─────────────────────────────────────────────────────────────────────────────
 
 void UProgrammingMenu::RunProgram()
 {
@@ -233,10 +226,6 @@ void UProgrammingMenu::ClearProgram()
 			-1, 2.0f, FColor::White, TEXT("Sequence cleared"));
 	}
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Private Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 ARobotCharacter* UProgrammingMenu::FindRobotInLevel() const
 {

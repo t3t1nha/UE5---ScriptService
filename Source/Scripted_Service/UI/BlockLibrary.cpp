@@ -57,6 +57,48 @@ TArray<FBlockData> UBlockLibrary::GetDefaultBlocks()
     Wait.Category = "Flow";
     Wait.bHasWaitParameter = true;
     Blocks.Add(Wait);
+
+    FBlockData IfTableHasOrder;
+    IfTableHasOrder.InstructionType    = EInstructionType::IfTableHasOrder;
+    IfTableHasOrder.DisplayName        = FText::FromString("If Table Has Order");
+    IfTableHasOrder.BlockColor         = FLinearColor(1.0f, 0.85f, 0.1f); // Gold
+    IfTableHasOrder.Category           = "Logic";
+    IfTableHasOrder.bIsContainerBlock  = true;  // Spawns ContainerBlockWidget
+    IfTableHasOrder.bHasTableParameter = true;  // Shows table number input
+    Blocks.Add(IfTableHasOrder);
+
+    FBlockData IfCarrying;
+    IfCarrying.InstructionType   = EInstructionType::IfCarryingDish;
+    IfCarrying.DisplayName       = FText::FromString("If Carrying Dish");
+    IfCarrying.BlockColor        = FLinearColor(1.0f, 0.85f, 0.1f);
+    IfCarrying.Category          = "Logic";
+    IfCarrying.bIsContainerBlock = true;
+    Blocks.Add(IfCarrying);
+
+    FBlockData IfNotCarrying;
+    IfNotCarrying.InstructionType   = EInstructionType::IfNotCarryingDish;
+    IfNotCarrying.DisplayName       = FText::FromString("If NOT Carrying Dish");
+    IfNotCarrying.BlockColor        = FLinearColor(1.0f, 0.85f, 0.1f);
+    IfNotCarrying.Category          = "Logic";
+    IfNotCarrying.bIsContainerBlock = true;
+    Blocks.Add(IfNotCarrying);
+
+    FBlockData RepeatLoop;
+    RepeatLoop.InstructionType        = EInstructionType::RepeatLoop;
+    RepeatLoop.DisplayName            = FText::FromString("Repeat");
+    RepeatLoop.BlockColor             = FLinearColor(0.8f, 0.3f, 1.0f); // Purple
+    RepeatLoop.Category               = "Logic";
+    RepeatLoop.bIsContainerBlock      = true;
+    RepeatLoop.bHasLoopCountParameter = true; // Shows loop count input
+    Blocks.Add(RepeatLoop);
+
+    FBlockData LoopForever;
+    LoopForever.InstructionType   = EInstructionType::LoopForever;
+    LoopForever.DisplayName       = FText::FromString("Loop Forever");
+    LoopForever.BlockColor        = FLinearColor(0.8f, 0.3f, 1.0f);
+    LoopForever.Category          = "Logic";
+    LoopForever.bIsContainerBlock = true;
+    Blocks.Add(LoopForever);
     
     return Blocks;
 }

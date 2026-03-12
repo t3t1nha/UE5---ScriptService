@@ -11,43 +11,13 @@
 #include "RobotCharacter.h"
 #include "ProgrammingMenu.generated.h"
 
-/**
- * UProgrammingMenu
- *
- * The top-level HUD widget for the robot programming system.
- * It contains:
- *   - A block palette  (WrapBox)              showing all draggable instructions.
- *   - A program sequence (UProgramSequenceWidget) as the drag-and-drop target.
- *   - Run / Stop / Clear controls callable from Blueprint button bindings.
- *
- * --- Required Blueprint bindings ---
- *   SequenceWidget   (UProgramSequenceWidget)  The drop zone / program builder.
- *   PaletteBox       (UWrapBox)               Holds the draggable palette blocks.
- *
- * --- Optional Blueprint bindings ---
- *   StatusText       (UTextBlock)             Displays runtime status messages.
- *
- * --- Blueprint setup ---
- *   1. Create WBP_ProgrammingMenu based on this class.
- *   2. Add WBP_ProgramSequence (UProgramSequenceWidget) named "SequenceWidget".
- *   3. Add a WrapBox named "PaletteBox" where palette blocks will be spawned.
- *   4. Assign BlockWidgetClass to your WBP_BlockWidget.
- *   5. Wire Run/Stop/Clear buttons to RunProgram(), StopProgram(), ClearProgram().
- *   6. The menu auto-populates the palette in NativeConstruct.
- *
- * --- Robot wiring ---
- *   Call SetTargetRobot() before calling RunProgram().  You can do this from
- *   Player_Character when it opens the menu next to a robot, or from a
- *   game-mode / level Blueprint when the player enters an interaction trigger.
- */
+
 UCLASS()
 class SCRIPTED_SERVICE_API UProgrammingMenu : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
-
-	// ─── Bound Widgets ───────────────────────────────────────────────────────
 
 	/**
 	 * The drag-and-drop sequence panel.  Must be a WBP_ProgramSequence
@@ -71,8 +41,6 @@ public:
 	UPROPERTY(meta = (BindWidgetOptional))
 	UTextBlock* StatusText;
 
-	// ─── Configuration ───────────────────────────────────────────────────────
-
 	/**
 	 * The UBlockWidget subclass to instantiate for palette entries.
 	 * Must match the class used inside WBP_ProgramSequence so that dragged
@@ -81,7 +49,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu|Config")
 	TSubclassOf<UBlockWidget> BlockWidgetClass;
 
-	// ─── Robot Reference ─────────────────────────────────────────────────────
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu|Config")
+	TSubclassOf<UContainerBlockWidget> ContainerBlockWidgetClass;
 
 	/**
 	 * The robot that will receive and execute programs built in this menu.
@@ -99,8 +68,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Menu|Robot")
 	void SetTargetRobot(ARobotCharacter* InRobot);
-
-	// ─── Menu Visibility ─────────────────────────────────────────────────────
 
 	/**
 	 * Makes the menu visible and triggers any open animation.
@@ -121,8 +88,6 @@ public:
 	/** @return true if the menu is currently visible/open. */
 	UFUNCTION(BlueprintPure, Category = "Programming Menu")
 	bool IsMenuOpen() const { return bIsOpen; }
-
-	// ─── Program Controls ────────────────────────────────────────────────────
 
 	/**
 	 * Reads the current sequence, sends it to TargetRobot, and starts

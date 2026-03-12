@@ -3,10 +3,6 @@
 #include "ProgramSequenceWidget.h"
 #include "Components/VerticalBoxSlot.h"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Public API
-// ─────────────────────────────────────────────────────────────────────────────
-
 TArray<FRobotInstruction> UProgramSequenceWidget::GetProgram() const
 {
 	TArray<FRobotInstruction> Program;
@@ -98,10 +94,6 @@ UBlockWidget* UProgramSequenceWidget::GetBlockAtIndex(int32 Index) const
 	return SequenceBlocks[Index];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Drag-and-Drop Overrides
-// ─────────────────────────────────────────────────────────────────────────────
-
 bool UProgramSequenceWidget::NativeOnDrop(
 	const FGeometry& InGeometry,
 	const FDragDropEvent& InDragDropEvent,
@@ -164,61 +156,63 @@ void UProgramSequenceWidget::NativeOnDragLeave(
 	SetDropHighlight(false);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Private Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
 UBlockWidget* UProgramSequenceWidget::CreateAndAddBlockWidget(const FBlockData& BlockData)
 {
-	if (!BlockWidgetClass)
-	{
-		UE_LOG(LogTemp, Error,
-			TEXT("ProgramSequenceWidget: BlockWidgetClass is null. "
-				 "Assign a UBlockWidget subclass in the Blueprint defaults."));
-		return nullptr;
-	}
+    UBlockWidget* NewBlock = nullptr;
 
-	// GetOwningPlayer() returns the owning APlayerController, required by CreateWidget
-	UBlockWidget* NewBlock = CreateWidget<UBlockWidget>(GetOwningPlayer(), BlockWidgetClass);
-	if (!NewBlock)
-	{
-		UE_LOG(LogTemp, Error,
-			TEXT("ProgramSequenceWidget: CreateWidget failed for BlockWidgetClass '%s'"),
-			*BlockWidgetClass->GetName());
-		return nullptr;
-	}
+    if (BlockData.bIsContainerBlock)
+    {
+        if (!ContainerBlockWidgetClass)
+        {
+            UE_LOG(LogTemp, Error,
+                TEXT("ProgramSequenceWidget: ContainerBlockWidgetClass is null. "
+                     "Assign WBP_ContainerBlock in the Blueprint defaults."));
+            return nullptr;
+        }
 
-	// Apply colours, text, and parameter visibility to the new widget
-	NewBlock->InitializeBlock(BlockData);
+        UContainerBlockWidget* Container =
+            CreateWidget<UContainerBlockWidget>(GetOwningPlayer(), ContainerBlockWidgetClass);
+        if (!Container) return nullptr;
 
-	/*
-	 * Bind the remove delegate.  When the block's "X" button calls
-	 * RequestRemove(), this sequence widget removes it automatically.
-	 * AddDynamic is used here because the delegate is declared as
-	 * DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam in BlockWidget.h.
-	 */
-	NewBlock->OnRemoveRequested.AddDynamic(
-		this, &UProgramSequenceWidget::HandleBlockRemoveRequested);
+        // Pass down BlockWidgetClass so the inner drop zone uses the same style
+        Container->InitializeContainerBlock(BlockData, BlockWidgetClass);
+        NewBlock = Container;
+    }
+    else
+    {
+        if (!BlockWidgetClass)
+        {
+            UE_LOG(LogTemp, Error,
+                TEXT("ProgramSequenceWidget: BlockWidgetClass is null."));
+            return nullptr;
+        }
 
-	// Track it in our ordered array
-	SequenceBlocks.Add(NewBlock);
+        UBlockWidget* Plain = CreateWidget<UBlockWidget>(GetOwningPlayer(), BlockWidgetClass);
+        if (!Plain) return nullptr;
 
-	// Add to the vertical box and configure layout
-	if (SequenceBox)
-	{
-		UVerticalBoxSlot* BoxSlot = SequenceBox->AddChildToVerticalBox(NewBlock);
-		if (BoxSlot)
-		{
-			// BlockSpacing creates a visual gap between consecutive entries
-			BoxSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, BlockSpacing));
-			BoxSlot->SetHorizontalAlignment(HAlign_Fill);
-			BoxSlot->SetVerticalAlignment(VAlign_Top);
-		}
-	}
+        Plain->InitializeBlock(BlockData);
+        NewBlock = Plain;
+    }
+	
+    NewBlock->OnRemoveRequested.AddDynamic(
+        this, &UProgramSequenceWidget::HandleBlockRemoveRequested);
 
-	return NewBlock;
+    SequenceBlocks.Add(NewBlock);
+
+    if (SequenceBox)
+    {
+        UVerticalBoxSlot* BoxSlot = SequenceBox->AddChildToVerticalBox(NewBlock);
+        if (BoxSlot)
+        {
+            BoxSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, BlockSpacing));
+            BoxSlot->SetHorizontalAlignment(HAlign_Fill);
+            BoxSlot->SetVerticalAlignment(VAlign_Top);
+        }
+    }
+
+    OnSequenceChanged.Broadcast();
+    return NewBlock;
 }
-
 void UProgramSequenceWidget::HandleBlockRemoveRequested(UBlockWidget* Block)
 {
 	// Find the block by pointer and remove it

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/DragDropOperation.h"
+#include "ContainerBlockWidget.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Components/Border.h"
@@ -18,34 +19,12 @@
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSequenceChanged);
 
-/**
- * UProgramSequenceWidget
- *
- * The drag-and-drop target panel that represents the robot's program.
- * Players drag UBlockWidgets from the block palette onto this widget to
- * build an ordered list of FRobotInstructions.
- *
- * --- Required Blueprint bindings ---
- *   SequenceBox     (UVerticalBox)  The scrollable container for program blocks.
- *
- * --- Optional Blueprint bindings ---
- *   DropZoneBorder  (UBorder)       Tinted while a block is dragged over the panel
- *                                   to give clear visual feedback.
- *
- * --- Blueprint setup ---
- *   1. Create WBP_ProgramSequence based on this class.
- *   2. Add a VerticalBox named "SequenceBox" (typically inside a ScrollBox).
- *   3. Optionally add a Border named "DropZoneBorder" as the panel background.
- *   4. Assign the same UBlockWidget subclass used in the palette to BlockWidgetClass.
- */
 UCLASS()
 class SCRIPTED_SERVICE_API UProgramSequenceWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
-
-	// ─── Bound Widgets ───────────────────────────────────────────────────────
 
 	/**
 	 * The vertical list that holds program blocks in execution order.
@@ -62,8 +41,6 @@ public:
 	 */
 	UPROPERTY(meta = (BindWidgetOptional))
 	UBorder* DropZoneBorder;
-
-	// ─── Configuration ───────────────────────────────────────────────────────
 
 	/**
 	 * The UBlockWidget subclass to instantiate for every new sequence entry.
@@ -92,7 +69,13 @@ public:
 		meta = (ClampMin = "0.0"))
 	float BlockSpacing = 4.0f;
 
-	// ─── Public API ──────────────────────────────────────────────────────────
+	/**
+ * The UContainerBlockWidget subclass (WBP_ContainerBlock) to spawn when a
+ * block with bIsContainerBlock == true is dropped onto the sequence.
+ * Must be set in the Blueprint defaults of WBP_ProgramSequence.
+ */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sequence|Config")
+	TSubclassOf<UContainerBlockWidget> ContainerBlockWidgetClass;
 
 	/**
 	 * Collects a FRobotInstruction from every block widget (top to bottom)
@@ -148,9 +131,6 @@ public:
 	FOnSequenceChanged OnSequenceChanged;
 
 protected:
-
-	// ─── Drag-and-Drop Overrides ─────────────────────────────────────────────
-
 	/**
 	 * Called when a dragged object is released over this widget.
 	 * Reads the UBlockWidget payload, creates a copy of its data in the

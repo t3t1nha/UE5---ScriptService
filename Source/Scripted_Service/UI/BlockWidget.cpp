@@ -128,6 +128,13 @@ void UBlockWidget::NativeOnDragDetected(
 	}
 }
 
+TArray<FRobotInstruction> UBlockWidget::GetInstructions()
+{
+	TArray<FRobotInstruction> Result;
+	Result.Add(GetInstruction());
+	return Result;
+}
+
 void UBlockWidget::NativeConstruct()
 {
 	Super::NativeConstruct();

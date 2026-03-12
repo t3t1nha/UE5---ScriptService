@@ -121,6 +121,8 @@ public:
 		const FPointerEvent& InMouseEvent,
 		UDragDropOperation*& OutOperation) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Block")
+	virtual TArray<FRobotInstruction> GetInstructions();
 protected:
 
 	virtual void NativeConstruct() override;

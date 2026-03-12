@@ -58,5 +58,14 @@ enum class EInstructionType : uint8
 	TakeOrder,
 	PickupFood,
 	DeliverOrder,
-	Wait
+	Wait,
+
+	IfTableHasOrder,
+	IfCarryingDish,
+	IfNotCarryingDish,
+
+	RepeatLoop,
+	LoopForever,
+
+	EndBlock
 };

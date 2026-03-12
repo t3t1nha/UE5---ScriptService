@@ -70,6 +70,12 @@ struct FBlockData
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHasWaitParameter = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsContainerBlock = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasLoopCountParameter = false;
 };
 
 USTRUCT(BlueprintType)
@@ -85,4 +91,7 @@ struct FRobotInstruction
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float WaitValue = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 LoopCount = 1;
 };
