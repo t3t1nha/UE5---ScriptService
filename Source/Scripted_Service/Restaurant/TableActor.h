@@ -6,6 +6,8 @@
 #include "BaseIngredient.h"
 #include "StructTypes.h"
 #include "IOrderable.h"
+#include "Components/WidgetComponent.h"
+#include "OrderWidget.h"
 #include "GameFramework/Actor.h"
 #include "TableActor.generated.h"
 
@@ -51,6 +53,14 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* TableMesh;
+
+	/**
+	 * World-space widget component that floats above the table mesh.
+	 * It hosts a UTableOrderWidget (WBP_TableOrder) and is shown / hidden
+	 * automatically when orders are placed, delivered, or time out.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UWidgetComponent* OrderIndicatorComponent;
 	
 	// Table identification
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Table")
@@ -133,6 +143,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Table|Order")
 	void CancelCurrentOrder();
 
+	/**
+	 * The UTableOrderWidget subclass to spawn inside OrderIndicatorComponent.
+	 * Assign WBP_TableOrder (your Blueprint widget) in the actor's Details panel.
+	 *
+	 * If left null the indicator component will not display anything but will
+	 * still compile and run correctly — useful for headless testing.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Table|UI")
+	TSubclassOf<UOrderWidget> OrderWidgetClass;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -159,5 +179,12 @@ private:
 	 * Clear the order timeout timer without firing the timeout callback.
 	 */
 	void ClearTimeoutTimer();
+
+	// Cached pointer to the widget living inside OrderIndicatorComponent
+	UPROPERTY()
+	UOrderWidget* OrderWidgetInstance;
+ 
+	void ShowOrderIndicator();
+	void HideOrderIndicator();
 	
 };

@@ -5,11 +5,18 @@
 
 ATableActor::ATableActor()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	TableNumber = 0;
+	OrderWidgetInstance = nullptr;
 
 	TableMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TableMesh"));
 	RootComponent = TableMesh;
+
+	OrderIndicatorComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("OrderIndicatorComponent"));
+	OrderIndicatorComponent->SetupAttachment(TableMesh);
+	OrderIndicatorComponent->SetWidgetSpace(EWidgetSpace::World);
+	OrderIndicatorComponent->SetDrawAtDesiredSize(true);
+	OrderIndicatorComponent->SetVisibility(false);
 }
 
 void ATableActor::BeginPlay()
@@ -21,6 +28,36 @@ void ATableActor::BeginPlay()
 	CurrentOrder.TableNumber   = TableNumber;
 	CurrentOrder.TimeWaiting   = 0.0f;
 
+	// OLD — hardcoded offset, ignores actual mesh size
+	OrderIndicatorComponent->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
+ 
+	// If a widget class was assigned, create the widget instance and cache it.
+	if (OrderWidgetClass)
+	{
+		// SetWidgetClass() tells the component which UUserWidget to spawn.
+		// The component manages the widget's lifetime automatically.
+		OrderIndicatorComponent->SetWidgetClass(OrderWidgetClass);
+ 
+		// GetUserWidgetObject() returns the live instance after SetWidgetClass().
+		OrderWidgetInstance =
+			Cast<UOrderWidget>(OrderIndicatorComponent->GetUserWidgetObject());
+ 
+		if (!OrderWidgetInstance)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("Table %d: OrderWidgetClass set but widget instance is null. "
+					 "Make sure the class derives from UTableOrderWidget."),
+				TableNumber);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Table %d: OrderWidgetClass is not set — no floating indicator "
+				 "will be shown. Assign WBP_TableOrder in the Details panel."),
+			TableNumber);
+	}
+	
 	if (PossibleDishes.Num() == 0)
 	{
 		UE_LOG(LogTemp, Warning,
@@ -75,7 +112,6 @@ void ATableActor::PlaceOrder(TSubclassOf<ABaseIngredient> Dish)
 	CurrentOrder.TableNumber = TableNumber;
 	CurrentOrder.TimeWaiting = 0.0f;
     
-	// Placeholder feedback
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(
@@ -85,6 +121,8 @@ void ATableActor::PlaceOrder(TSubclassOf<ABaseIngredient> Dish)
 			FString::Printf(TEXT("🍽  Table %d wants: %s"), TableNumber, *Dish->GetName())
 		);
 	}
+
+	ShowOrderIndicator();
 	
 	// Broadcast so Blueprint / HUD can react
 	OnOrderPlaced.Broadcast(TableNumber, CurrentOrder);
@@ -113,6 +151,8 @@ bool ATableActor::DeliverOrder(TSubclassOf<ABaseIngredient> Dish)
 	if (Dish == CurrentOrder.RequestedDish)
 	{
 		CurrentOrder.OrderState = EOrderState::Delivered;
+
+		HideOrderIndicator();
 
 		UE_LOG(LogTemp, Log,
 			TEXT("Table %d: Correct dish delivered! ✓"), TableNumber);
@@ -263,6 +303,8 @@ void ATableActor::OnOrderTimedOut()
 		);
 	}
 
+	HideOrderIndicator();
+	
 	// Notify listeners.
 	OnOrderExpired.Broadcast(TableNumber);
 
@@ -280,4 +322,30 @@ void ATableActor::ClearTimeoutTimer()
 	{
 		GetWorldTimerManager().ClearTimer(OrderTimeoutTimerHandle);
 	}
+}
+
+void ATableActor::ShowOrderIndicator()
+{
+	OrderIndicatorComponent->SetVisibility(true);
+ 
+	if (OrderWidgetInstance)
+	{
+		OrderWidgetInstance->ShowOrder(TableNumber, CurrentOrder);
+	}
+ 
+	UE_LOG(LogTemp, Log,
+		TEXT("Table %d: Order indicator shown."), TableNumber);
+}
+ 
+void ATableActor::HideOrderIndicator()
+{
+	OrderIndicatorComponent->SetVisibility(false);
+ 
+	if (OrderWidgetInstance)
+	{
+		OrderWidgetInstance->HideOrder();
+	}
+ 
+	UE_LOG(LogTemp, Log,
+		TEXT("Table %d: Order indicator hidden."), TableNumber);
 }
