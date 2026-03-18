@@ -9,6 +9,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
+#include "GameHUD.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Player_Character.generated.h"
@@ -103,6 +104,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<UProgrammingMenu> ProgrammingMenuClass;
 
+	/**
+	 * The Widget Blueprint class for the in-game HUD overlay.
+	 * Set this to WBP_GameHUD in the Player Blueprint's Details panel.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HUD")
+	TSubclassOf<UGameHUD> HUDWidgetClass;
+ 
+	/**
+	 * Live instance of the HUD widget, created in BeginPlay and added to
+	 * the viewport.  Kept so it can be hidden / shown later if needed.
+	 */
+	UPROPERTY()
+	UGameHUD* HUDWidgetInstance = nullptr;
+	
 	/**
 	 * Live instance of the programming menu.
 	 */

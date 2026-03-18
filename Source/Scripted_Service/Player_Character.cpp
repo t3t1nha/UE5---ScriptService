@@ -74,6 +74,30 @@ void APlayer_Character::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("Player_Character: ProgrammingMenuClass is not set! "
 			"Assign WBP_ProgrammingMenu in the Blueprint defaults."));
 	}
+
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UGameHUD>(GetWorld(), HUDWidgetClass);
+		if (HUDWidgetInstance)
+		{
+			// ZOrder 0 — sits below the Programming Menu (which can use ZOrder 1+)
+			HUDWidgetInstance->AddToViewport(0);
+ 
+			UE_LOG(LogTemp, Log,
+				TEXT("Player_Character: HUD widget created and added to viewport."));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("Player_Character: Failed to create HUD widget from HUDWidgetClass."));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Player_Character: HUDWidgetClass is not set. "
+				 "Assign WBP_GameHUD in the Blueprint defaults."));
+	}
 }
 
 // Called every frame
