@@ -10,9 +10,6 @@ class SCRIPTED_SERVICE_API UGameHUD : public UUserWidget
     GENERATED_BODY()
 
 public:
-
-    // ── Blueprint-bound text blocks ───────────────────────────────────────────
-
     /**
      * Displays the current score.
      * Example text: "Score: 300"
@@ -53,6 +50,9 @@ public:
     UPROPERTY(meta = (BindWidgetOptional))
     UTextBlock* OrdersExpiredText;
 
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnTipsChanged(float TipsIncreaseValue);
+    
 protected:
 
     /**
@@ -65,7 +65,8 @@ protected:
     virtual void NativeConstruct() override;
 
 private:
-
+    
+    float Tips = -1.0f;
     /**
      * Callback bound to AScriptedServiceGameMode::OnStatsUpdated.
      * Updates every text block with the freshest values.

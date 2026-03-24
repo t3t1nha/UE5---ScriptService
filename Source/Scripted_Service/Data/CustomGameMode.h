@@ -6,16 +6,11 @@
 #include "TableActor.h"
 #include "CustomGameMode.generated.h"
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Delegate — broadcast whenever any tracked stat changes.
-//  The HUD widget binds to this so it never has to poll.
-//
 //  @param Score            Current cumulative score (points).
 //  @param TotalTips        Total tips earned so far (dollars, float).
 //  @param OrdersCorrect    Running count of correctly delivered orders.
 //  @param OrdersWrong      Running count of wrongly delivered orders.
 //  @param OrdersExpired    Running count of orders that timed-out.
-// ─────────────────────────────────────────────────────────────────────────────
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(
     FOnStatsUpdated,
     int32,  Score,
@@ -90,8 +85,6 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 OrdersExpired = 0;
 
-    // ── Event ────────────────────────────────────────────────────────────────
-
     /**
      * Fired every time any tracked stat changes.
      * Bind your HUD widget to this delegate so it refreshes automatically.
@@ -100,9 +93,7 @@ public:
      */
     UPROPERTY(BlueprintAssignable, Category = "Stats|Events")
     FOnStatsUpdated OnStatsUpdated;
-
-    // ── Blueprint-callable helpers ────────────────────────────────────────────
-
+    
     /**
      * Manually reset all stats to zero and broadcast the reset.
      * Useful for a "Restart" or "New Game" button.

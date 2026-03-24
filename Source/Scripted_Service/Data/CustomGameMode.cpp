@@ -65,15 +65,10 @@ void ACustomGameMode::SubscribeToAllTables()
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  HandleOrderDelivered  (bound to every table's OnOrderDelivered)
-// ─────────────────────────────────────────────────────────────────────────────
-
 void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, bool bCorrect)
 {
     if (bCorrect)
     {
-        // ── Correct delivery ─────────────────────────────────────────────────
         Score       += PointsPerCorrectDelivery;
         TotalTips   += TipPerCorrectDelivery;
         OrdersCorrect++;
@@ -86,8 +81,6 @@ void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, bool bCorrect)
     }
     else
     {
-        // ── Wrong delivery ───────────────────────────────────────────────────
-        // Clamp so score never goes negative.
         Score = FMath::Max(0, Score - PenaltyPerWrongDelivery);
         OrdersWrong++;
 
@@ -99,10 +92,6 @@ void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, bool bCorrect)
 
     BroadcastStats();
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  HandleOrderExpired  (bound to every table's OnOrderExpired)
-// ─────────────────────────────────────────────────────────────────────────────
 
 void ACustomGameMode::HandleOrderExpired(int32 TableNumber)
 {
@@ -118,9 +107,6 @@ void ACustomGameMode::HandleOrderExpired(int32 TableNumber)
     BroadcastStats();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  ResetStats
-// ─────────────────────────────────────────────────────────────────────────────
 
 void ACustomGameMode::ResetStats()
 {
@@ -135,9 +121,6 @@ void ACustomGameMode::ResetStats()
     BroadcastStats();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  GetStatsDebugString
-// ─────────────────────────────────────────────────────────────────────────────
 
 FString ACustomGameMode::GetStatsDebugString() const
 {
@@ -146,17 +129,10 @@ FString ACustomGameMode::GetStatsDebugString() const
         Score, TotalTips, OrdersCorrect, OrdersWrong, OrdersExpired);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  BroadcastStats  (private — called after every mutation)
-// ─────────────────────────────────────────────────────────────────────────────
 
 void ACustomGameMode::BroadcastStats()
 {
-    // Guard: score must never be negative (belt-and-suspenders after the clamps
-    // in the handlers above, but important if BroadcastStats is ever called
-    // from other paths in the future).
     Score = FMath::Max(0, Score);
 
-    // Notify all bound listeners (the HUD widget, Blueprint actors, etc.)
     OnStatsUpdated.Broadcast(Score, TotalTips, OrdersCorrect, OrdersWrong, OrdersExpired);
 }
