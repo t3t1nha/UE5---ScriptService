@@ -57,13 +57,10 @@ public:
 
     /**
      * Tip amount (in dollars) added for a correct delivery.
-     * Future-proofed: could be made dynamic based on how fast delivery was.
      */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Scoring",
         meta = (ClampMin = "0.0"))
     float TipPerCorrectDelivery = 5.0f;
-
-    // ── Live stats (read-only from outside) ──────────────────────────────────
 
     /** Accumulated points for this session. Never goes below 0. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")

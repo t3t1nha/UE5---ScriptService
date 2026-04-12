@@ -12,8 +12,8 @@ ABaseIngredient::ABaseIngredient()
 
 	ItemMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
 	SetRootComponent(ItemMeshComponent);
-
-	ItemMeshComponent->SetSimulatePhysics(true);
+	
+	ItemMeshComponent->SetSimulatePhysics(false);
 	ItemMeshComponent->SetCollisionProfileName(TEXT("PhysicsActor"));
 }
 

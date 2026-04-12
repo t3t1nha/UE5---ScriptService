@@ -122,6 +122,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Menu|Palette")
 	void PopulatePalette();
 
+	UFUNCTION(BlueprintPure, Category = "Menu|State")
+	bool IsProgramDirty() const { return bProgramDirty; }
+	
 protected:
 
 	/** Populates the palette when the widget is first created. */
@@ -150,4 +153,9 @@ private:
 	 */
 	void SetStatusMessage(const FString& Message,
 		FLinearColor Color = FLinearColor::White);
+
+	bool bProgramDirty = false;
+ 
+	UFUNCTION()
+	void OnSequenceModified();
 };

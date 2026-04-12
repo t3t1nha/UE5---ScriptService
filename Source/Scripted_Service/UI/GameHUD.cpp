@@ -2,6 +2,7 @@
 #include "GameHUD.h"
 #include "CustomGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Scripted_Service/Player_Character.h"
 
 void UGameHUD::NativeConstruct()
 {
@@ -9,7 +10,7 @@ void UGameHUD::NativeConstruct()
 
     ACustomGameMode* GM = Cast<ACustomGameMode>(
         UGameplayStatics::GetGameMode(GetWorld()));
-
+    
     if (GM)
     {
         GM->OnStatsUpdated.AddDynamic(this, &UGameHUD::RefreshStats);
@@ -18,14 +19,18 @@ void UGameHUD::NativeConstruct()
         
         RefreshStats(GM->Score, GM->TotalTips,
                      GM->OrdersCorrect, GM->OrdersWrong, GM->OrdersExpired);
-
-        UE_LOG(LogTemp, Log,
-            TEXT("GameHUDWidget: Bound to ScriptedServiceGameMode::OnStatsUpdated."));
     }
     else
     {
         UE_LOG(LogTemp, Warning,
             TEXT("GameHUDWidget: Could not find AScriptedServiceGameMode"));
+    }
+
+    APlayer_Character* PC = Cast<APlayer_Character>(UGameplayStatics::GetPlayerCharacter(this, 0));
+
+    if (PC)
+    {
+        PC->OnPlayerGrabItem.AddDynamic(this, &UGameHUD::OnGrabItem);
     }
 }
 void UGameHUD::RefreshStats(int32 Score, float TotalTips,

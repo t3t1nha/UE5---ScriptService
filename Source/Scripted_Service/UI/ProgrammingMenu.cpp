@@ -251,3 +251,12 @@ void UProgrammingMenu::SetStatusMessage(const FString& Message, FLinearColor Col
 		StatusText->SetColorAndOpacity(FSlateColor(Color));
 	}
 }
+
+void UProgrammingMenu::OnSequenceModified()
+{
+	bProgramDirty = true;
+ 
+	UE_LOG(LogTemp, Verbose,
+		TEXT("ProgrammingMenu: Sequence modified — program marked dirty. "
+			 "Robot will stay paused until Run is pressed."));
+}

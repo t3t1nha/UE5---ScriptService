@@ -25,7 +25,7 @@ void AApparatusActor::BeginPlay()
 
 	if (DropZoneComponent)
 	{
-		DropZoneComponent->OnComponentBeginOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapBegin);
+		// DropZoneComponent->OnComponentBeginOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapBegin);
 		DropZoneComponent->OnComponentEndOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapEnd);
 	}
 }
@@ -195,6 +195,29 @@ void AApparatusActor::StartCookingProcess()
 	} else {
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Cooking not started or in Progress"));
 	}
+}
+
+void AApparatusActor::SnapIngredient(ABaseIngredient* ToSnapIngredient)
+{
+	if (!ToSnapIngredient)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("No ingredient"));
+		return;
+	}
+	
+	UPrimitiveComponent* Root = Cast<UPrimitiveComponent>(ToSnapIngredient->GetRootComponent());
+	if (Root)
+	{
+		Root->SetSimulatePhysics(false);
+	}
+
+	const FVector& DropZoneLocation = DropZoneComponent->GetComponentLocation();
+	ToSnapIngredient->SetActorLocation(DropZoneLocation);
+	ToSnapIngredient->SetActorRotation(FRotator(0.0f, 0.0f, 0.0f));
+	
+	AddIngredient(ToSnapIngredient);
+	
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Snapping Ingredient"));
 }
 
 void AApparatusActor::FinishCooking()

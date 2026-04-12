@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "RobotCommand.h"
 #include "EnumTypes.h"
+#include "InteractInterface.h"
 #include "StructTypes.h"
 #include "IProgrammable.h"
 #include "RobotCharacter.generated.h"
@@ -11,7 +12,7 @@
 /**
  */
 UCLASS()
-class SCRIPTED_SERVICE_API ARobotCharacter : public ACharacter, public IProgrammable
+class SCRIPTED_SERVICE_API ARobotCharacter : public ACharacter, public IInteractInterface, public IProgrammable
 {
     GENERATED_BODY()
 
@@ -48,6 +49,8 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Robot|Inventory")
     TSubclassOf<class ABaseIngredient> CarryingDish;
 
+    virtual void Interact_Implementation() override;
+    
     virtual void LoadProgram(const TArray<FRobotInstruction>& Instructions) override;
 
     UFUNCTION(BlueprintCallable, Category = "Robot|Program")
@@ -101,8 +104,6 @@ private:
      */
     UPROPERTY()
     URobotCommand* CurrentCommand;
-
-    // ─── Interpreter methods ──────────────────────────────────────────────────
 
     /**
      * Evaluate and dispatch the instruction at InstructionPointer.

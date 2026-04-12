@@ -11,6 +11,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameHUD.h"
 #include "CoreMinimal.h"
+#include "RobotOSWidget.h"
 #include "GameFramework/Character.h"
 #include "Player_Character.generated.h"
 
@@ -19,6 +20,10 @@ class UAnimBlueprint;
 class UInputMappingContext;
 class UInputAction;
 class UInputComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+	FOnPlayerGrabItem,
+	bool, bisHoldingItem);
 
 UCLASS()
 class SCRIPTED_SERVICE_API APlayer_Character : public ACharacter
@@ -29,6 +34,9 @@ public:
 	// Sets default values for this character's properties
 	APlayer_Character();
 
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnPlayerGrabItem OnPlayerGrabItem;
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -53,8 +61,14 @@ protected:
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputAction* ToggleMenuAction;
+	UInputAction* DropAction;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* ToggleMenuAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* CloseAction;
+
 	// Physics Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UPhysicsHandleComponent* PhysicsHandleComponent;
@@ -68,8 +82,16 @@ public:
 	void Look(const FInputActionValue& Value);
 	UFUNCTION()
 	void Interact();
+	UFUNCTION()
+	void Drop();
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ToggleMenu();
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void OpenRobotOS(ARobotCharacter* Robot);
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void CloseRobotOS();
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	UCameraComponent* FirstPersonCameraComponent;
@@ -99,7 +121,7 @@ public:
 	UAnimBlueprint* FirstPersonDefaultAnim;
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-	bool bIsHoldingItem;
+	ABaseIngredient* HeldItem;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<UProgrammingMenu> ProgrammingMenuClass;
@@ -117,6 +139,12 @@ public:
 	 */
 	UPROPERTY()
 	UGameHUD* HUDWidgetInstance = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<URobotOSWidget> RobotOSWidgetClass;
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI")
+	URobotOSWidget* RobotOSInstance = nullptr; 
 	
 	/**
 	 * Live instance of the programming menu.
@@ -127,4 +155,14 @@ public:
 	/** True while the programming menu is open. Blueprint-readable. */
 	UPROPERTY(BlueprintReadOnly, Category = "UI")
 	bool bIsMenuOpen = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI")
+	bool bIsOSOpen = false;
+
+private:
+
+	UPROPERTY()
+	ARobotCharacter* targetRobot = nullptr;
+
+	bool bRobotWasPausedOnOpen = false;
 };

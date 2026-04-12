@@ -12,44 +12,37 @@ class SCRIPTED_SERVICE_API UGameHUD : public UUserWidget
 public:
     /**
      * Displays the current score.
-     * Example text: "Score: 300"
-     * Named "ScoreText" in the WBP_GameHUD widget Blueprint.
      */
     UPROPERTY(meta = (BindWidgetOptional))
     UTextBlock* ScoreText;
 
     /**
      * Displays the running tip total in dollars.
-     * Example text: "Tips: $15.00"
-     * Named "TipsText" in the WBP_GameHUD widget Blueprint.
      */
     UPROPERTY(meta = (BindWidgetOptional))
     UTextBlock* TipsText;
 
     /**
      * Running count of correctly delivered orders.
-     * Example text: "✓ 3"
-     * Named "OrdersCorrectText" in the WBP_GameHUD widget Blueprint.
      */
     UPROPERTY(meta = (BindWidgetOptional))
     UTextBlock* OrdersCorrectText;
 
     /**
-     * Running count of orders delivered with the wrong dish.
-     * Example text: "✗ 1"
-     * Named "OrdersWrongText" in the WBP_GameHUD widget Blueprint.
+     * Running count of orders delivered with the wrong dish
      */
     UPROPERTY(meta = (BindWidgetOptional))
     UTextBlock* OrdersWrongText;
 
     /**
      * Running count of orders that timed out before delivery.
-     * Example text: "⏱ 0"
-     * Named "OrdersExpiredText" in the WBP_GameHUD widget Blueprint.
      */
     UPROPERTY(meta = (BindWidgetOptional))
     UTextBlock* OrdersExpiredText;
 
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnGrabItem(bool isHolding);
+    
     UFUNCTION(BlueprintImplementableEvent)
     void OnTipsChanged(float TipsIncreaseValue);
     
@@ -57,10 +50,6 @@ protected:
 
     /**
      * Called once when the widget is first created and added to the viewport.
-     *
-     * Finds AScriptedServiceGameMode and binds RefreshStats to its
-     * OnStatsUpdated delegate.  Also fires an immediate RefreshStats call
-     * so the HUD shows the current values right away (e.g. after a reset).
      */
     virtual void NativeConstruct() override;
 

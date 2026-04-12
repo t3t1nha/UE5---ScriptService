@@ -18,6 +18,7 @@
 
 #include "EngineUtils.h"
 #include "TimerManager.h"
+#include "Scripted_Service/Player_Character.h"
 
 ARobotCharacter::ARobotCharacter()
 {
@@ -61,6 +62,22 @@ void ARobotCharacter::BeginPlay()
             TEXT("ARobotCharacter '%s': TableManager found — '%s'"),
             *GetName(), *TableManager->GetName());
     }
+}
+
+void ARobotCharacter::Interact_Implementation()
+{
+    if (bIsExecuting && !bIsPaused)
+    {
+        PauseProgram();
+    }
+
+    APlayerController* PC = Cast<APlayerController>(GetController());
+    if (!PC) return;
+
+    APlayer_Character* PlayerCharacter = Cast<APlayer_Character>(PC->GetPawn());
+    if (!PlayerCharacter) return;
+
+    PlayerCharacter->OpenRobotOS(this);
 }
 
 void ARobotCharacter::LoadProgram(const TArray<FRobotInstruction>& Instructions)

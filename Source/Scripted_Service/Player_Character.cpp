@@ -105,7 +105,7 @@ void APlayer_Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bIsHoldingItem)
+	if (HeldItem != nullptr)
 	{
 		FVector WorldLocation = FirstPersonCameraComponent->GetComponentLocation();
 		FVector ForwardVector = FirstPersonCameraComponent->GetForwardVector();
@@ -157,6 +157,11 @@ void APlayer_Character::Interact()
 	FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
 	RV_TraceParams.bTraceComplex = true;
 	RV_TraceParams.bReturnPhysicalMaterial = false;
+
+	if (HeldItem != nullptr)
+	{
+		RV_TraceParams.AddIgnoredActor(HeldItem);
+	}
 	
 	FHitResult Hit;
 	FVector Start = WorldLocation;
@@ -164,35 +169,65 @@ void APlayer_Character::Interact()
 	
 	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, RV_TraceParams);
 
-	if (bIsHoldingItem)
+	if (Hit.bBlockingHit)
 	{
-		PhysicsHandleComponent->ReleaseComponent();
-		bIsHoldingItem = false;
-	}
-	else
-	{
-		if (Hit.bBlockingHit)
+		AActor* HitActor = Hit.GetActor();
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, 
+		FString::Printf(TEXT("Hit: %s"), *HitActor->GetName()));
+
+		// Grabable Check
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, 
+			FString::Printf(TEXT("IsGrabable: %d"), HitActor->Implements<UGrabableInterface>()));
+
+		// Interactable Check
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, 
+			FString::Printf(TEXT("IsInteractable: %d"), HitActor->Implements<UInteractInterface>()));
+
+		if (HeldItem != nullptr)
 		{
-			AActor* HitActor = Hit.GetActor();
+			AApparatusActor* Apparatus = Cast<AApparatusActor>(HitActor);
+			if (Apparatus != nullptr)
+			{
+				Apparatus->SnapIngredient(HeldItem);
+				Drop();
+			}
+		}	
+
+		const bool bIsGrabable = HitActor->Implements<UGrabableInterface>();
+
+		if (bIsGrabable)
+		{
+			UPrimitiveComponent* HitComponent = Hit.GetComponent();
+			FVector HitLocation = HitActor->GetActorLocation();
+			FRotator HitRotation = HitActor->GetActorRotation();
+
+			UPrimitiveComponent* Root = Cast<UPrimitiveComponent>(HitActor->GetRootComponent());
+			if (Root)
+			{
+				Root->SetSimulatePhysics(true);
+			}
 			
-			const bool bIsGrabable = HitActor->Implements<UGrabableInterface>();
-			if (bIsGrabable)
-			{
-				UPrimitiveComponent* HitComponent = Hit.GetComponent();
-				FVector HitLocation = HitActor->GetActorLocation();
-				FRotator HitRotation = HitActor->GetActorRotation();
-				
-				PhysicsHandleComponent->GrabComponentAtLocationWithRotation(HitComponent, FName("None") , HitLocation, HitRotation);
-				bIsHoldingItem = true;
-			}
-			else if (HitActor->Implements<UInteractInterface>())
-			{
-				IInteractInterface::Execute_Interact(HitActor);
-			}
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interact" + HitActor->GetName() + " hit"));
+			PhysicsHandleComponent->GrabComponentAtLocationWithRotation(HitComponent, FName("None") , HitLocation, HitRotation);
+			ABaseIngredient* HitIngredient = Cast<ABaseIngredient>(HitActor);
+			HeldItem = HitIngredient;
+			OnPlayerGrabItem.Broadcast(true);
+		}
+		else if (HitActor->Implements<UInteractInterface>())
+		{
+			IInteractInterface::Execute_Interact(HitActor);
 		}
 	}
 }
+
+void APlayer_Character::Drop()
+{
+	if (HeldItem != nullptr)
+	{
+		PhysicsHandleComponent->ReleaseComponent();
+		HeldItem = nullptr;
+		OnPlayerGrabItem.Broadcast(false);
+	};
+};
 
 void APlayer_Character::ToggleMenu()
 {
@@ -242,6 +277,132 @@ void APlayer_Character::ToggleMenu()
 	}
 }
 
+void APlayer_Character::OpenRobotOS(ARobotCharacter* Robot)
+{
+	if (!Robot) return;
+
+	if (!RobotOSInstance)
+	{
+		if (!RobotOSWidgetClass) return;
+
+		RobotOSInstance = CreateWidget<URobotOSWidget>(GetWorld(), RobotOSWidgetClass);
+
+		RobotOSInstance->AddToViewport(20);
+		RobotOSInstance->OnCloseRequested.AddDynamic(this, &APlayer_Character::CloseRobotOS);
+	}
+
+	bRobotWasPausedOnOpen = Robot->bIsExecuting && Robot->bIsPaused;
+	Robot = Robot;
+
+	// ── Initialize and show ───────────────────────────────────────────────────
+	RobotOSInstance->InitializeOS(Robot);
+	RobotOSInstance->SetVisibility(ESlateVisibility::Visible);
+ 
+	// ── Input mode ────────────────────────────────────────────────────────────
+	APlayerController* PC = Cast<APlayerController>(Controller);
+	if (PC)
+	{
+		// GameAndUI: game movement is blocked by our bIsMenuOpen guard in Move/Look,
+		// but the Enhanced Input bindings (CloseOSAction etc.) still fire.
+		FInputModeGameAndUI GameAndUIMode;
+		GameAndUIMode.SetWidgetToFocus(RobotOSInstance->TakeWidget());
+		GameAndUIMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PC->SetInputMode(GameAndUIMode);
+		PC->bShowMouseCursor = true;
+	}
+ 
+	// Suppress Move / Look / Interact
+	bIsMenuOpen = true;
+	bIsOSOpen   = true;
+ 
+	UE_LOG(LogTemp, Log,
+		TEXT("Player_Character: Robot OS opened for '%s'. "
+			 "Robot was %s when OS opened."),
+		*Robot->GetName(),
+		bRobotWasPausedOnOpen ? TEXT("PAUSED") : TEXT("IDLE"));
+}
+
+void APlayer_Character::CloseRobotOS()
+{
+	// Guard against spurious calls (e.g. ESC pressed when OS is already closed)
+    if (!bIsOSOpen)
+    {
+        return;
+    }
+ 
+    // ── Hide the overlay ──────────────────────────────────────────────────────
+    if (RobotOSInstance)
+    {
+        RobotOSInstance->SetVisibility(ESlateVisibility::Collapsed);
+    }
+ 
+    // ── Restore game input ────────────────────────────────────────────────────
+    APlayerController* PC = Cast<APlayerController>(Controller);
+    if (PC)
+    {
+        FInputModeGameOnly GameInputMode;
+        PC->SetInputMode(GameInputMode);
+        PC->bShowMouseCursor = false;
+    }
+ 
+    bIsMenuOpen = false;
+    bIsOSOpen   = false;
+ 
+    // ── Robot resume logic ────────────────────────────────────────────────────
+    //
+    // We auto-resume ONLY if ALL of the following are true:
+    //   a) The robot had a program paused when the OS opened  (bRobotWasPausedOnOSOpen)
+    //   b) The robot is still in a paused state right now     (bIsExecuting && bIsPaused)
+    //      → This would be false if the player pressed Run inside the OS, which
+    //        started a fresh execution and the robot is no longer paused.
+    //   c) The player made NO changes to the program sequence (HasPendingChanges == false)
+    //      → If dirty, the player must press Run to commit changes explicitly.
+    //
+    if (targetRobot)
+    {
+        const bool bStillPaused =
+            targetRobot->bIsExecuting && targetRobot->bIsPaused;
+ 
+        const bool bHasChanges =
+            RobotOSInstance && RobotOSInstance->HasPendingChanges();
+ 
+        if (bRobotWasPausedOnOpen && bStillPaused && !bHasChanges)
+        {
+            UE_LOG(LogTemp, Log,
+                TEXT("Player_Character: No changes made — auto-resuming robot '%s'."),
+                *targetRobot->GetName());
+ 
+            targetRobot->ResumeProgram();
+        }
+        else if (bHasChanges)
+        {
+            UE_LOG(LogTemp, Log,
+                TEXT("Player_Character: Program was modified — robot '%s' stays paused. "
+                     "Press Run in the OS to execute the new program."),
+                *targetRobot->GetName());
+ 
+            if (GEngine)
+            {
+                GEngine->AddOnScreenDebugMessage(
+                    -1, 4.0f, FColor::Yellow,
+                    TEXT("⚠  Program changed — press Run to apply."));
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Log,
+                TEXT("Player_Character: Robot '%s' was idle when OS opened — no resume needed."),
+                *targetRobot->GetName());
+        }
+    }
+ 
+    // Clear the snapshot — next OS open will refresh it
+    targetRobot           = nullptr;
+    bRobotWasPausedOnOpen = false;
+ 
+    UE_LOG(LogTemp, Log, TEXT("Player_Character: Robot OS closed."));
+}
+
 // Called to bind functionality to input
 void APlayer_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -254,10 +415,12 @@ void APlayer_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayer_Character::Look);
 
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayer_Character::Interact);
+		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &APlayer_Character::Drop);
 		
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		EnhancedInputComponent->BindAction(ToggleMenuAction, ETriggerEvent::Started,   this, &APlayer_Character::ToggleMenu);
+		EnhancedInputComponent->BindAction(CloseAction, ETriggerEvent::Triggered, this, &APlayer_Character::CloseRobotOS);
 	}
 }

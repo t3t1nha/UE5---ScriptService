@@ -110,7 +110,7 @@ void UBlockWidget::NativeOnDragDetected(
 	// Create the operation object that UMG tracks until mouse-up
 	UDragDropOperation* DragOp = NewObject<UDragDropOperation>();
 
-	UBlockWidget* DragVisual = CreateWidget<UBlockWidget>(GetWorld(), StaticClass());
+	UBlockWidget* DragVisual = CreateWidget<UBlockWidget>(GetWorld(), GetClass());
 	if (DragVisual)
 	{
 		DragVisual->InitializeBlock(BlockData);

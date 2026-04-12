@@ -155,13 +155,13 @@ bool ATableActor::DeliverOrder(TSubclassOf<ABaseIngredient> Dish)
 		HideOrderIndicator();
 
 		UE_LOG(LogTemp, Log,
-			TEXT("Table %d: Correct dish delivered! ✓"), TableNumber);
+			TEXT("Table %d: Correct dish delivered!"), TableNumber);
 
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
 				TableNumber, 4.0f, FColor::Green,
-				FString::Printf(TEXT("✓  Table %d: Correct dish delivered!"), TableNumber)
+				FString::Printf(TEXT("Table %d: Correct dish delivered!"), TableNumber)
 			);
 		}
 

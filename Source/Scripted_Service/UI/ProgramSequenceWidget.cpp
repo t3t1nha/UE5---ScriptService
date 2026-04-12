@@ -12,7 +12,7 @@ TArray<FRobotInstruction> UProgramSequenceWidget::GetProgram() const
 	{
 		if (Block)
 		{
-			Program.Add(Block->GetInstruction());
+			Program.Append(Block->GetInstructions());
 		}
 	}
 

@@ -37,6 +37,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Cooking")
 	void StartCookingProcess();
+
+	UFUNCTION(BlueprintCallable, Category = "Cooking")
+	void SnapIngredient(ABaseIngredient* ToSnapIngredient);
 	
 protected:
 	virtual void BeginPlay() override;

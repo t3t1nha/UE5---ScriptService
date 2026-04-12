@@ -26,28 +26,17 @@ void ACustomGameMode::BeginPlay()
     BroadcastStats();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  SubscribeToAllTables
-// ─────────────────────────────────────────────────────────────────────────────
-
 void ACustomGameMode::SubscribeToAllTables()
 {
     int32 TableCount = 0;
 
-    // TActorIterator<ATableActor> walks every ATableActor that is currently
-    // placed (or spawned) in the persistent level.
-    // Docs: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/EngineUtils/TActorIterator
     for (TActorIterator<ATableActor> It(GetWorld()); It; ++It)
     {
         ATableActor* Table = *It;
 
-        // OnOrderDelivered → HandleOrderDelivered
-        // AddDynamic requires the target to be a UObject and the function
-        // to be a UFUNCTION — both conditions are met here.
         Table->OnOrderDelivered.AddDynamic(
             this, &ACustomGameMode::HandleOrderDelivered);
 
-        // OnOrderExpired → HandleOrderExpired
         Table->OnOrderExpired.AddDynamic(
             this, &ACustomGameMode::HandleOrderExpired);
 
@@ -95,7 +84,6 @@ void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, bool bCorrect)
 
 void ACustomGameMode::HandleOrderExpired(int32 TableNumber)
 {
-    // Clamp so score never goes negative.
     Score = FMath::Max(0, Score - PenaltyPerExpiredOrder);
     OrdersExpired++;
 
