@@ -28,7 +28,6 @@ void ATableActor::BeginPlay()
 	CurrentOrder.TableNumber   = TableNumber;
 	CurrentOrder.TimeWaiting   = 0.0f;
 
-	// OLD — hardcoded offset, ignores actual mesh size
 	OrderIndicatorComponent->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
  
 	// If a widget class was assigned, create the widget instance and cache it.

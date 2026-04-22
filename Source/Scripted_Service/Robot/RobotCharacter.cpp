@@ -66,16 +66,16 @@ void ARobotCharacter::BeginPlay()
 
 void ARobotCharacter::Interact_Implementation()
 {
-    if (bIsExecuting && !bIsPaused)
+   // APlayerController* PC = Cast<APlayerController>(GetController());
+   // if (!PC){ GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("NO PC")); return;
+   // }
+
+    APlayer_Character* PlayerCharacter = nullptr;
+    for (TActorIterator<APlayer_Character> ActorIterator(GetWorld()); ActorIterator; ++ActorIterator)
     {
-        PauseProgram();
+        PlayerCharacter = *ActorIterator;
     }
-
-    APlayerController* PC = Cast<APlayerController>(GetController());
-    if (!PC) return;
-
-    APlayer_Character* PlayerCharacter = Cast<APlayer_Character>(PC->GetPawn());
-    if (!PlayerCharacter) return;
+    if (!PlayerCharacter){ GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("NoPlayerChar")); return; }
 
     PlayerCharacter->OpenRobotOS(this);
 }
@@ -109,7 +109,7 @@ void ARobotCharacter::ExecuteProgram()
             TEXT("ARobotCharacter: ExecuteProgram called but no program is loaded."));
         return;
     }
-
+    
     if (bIsExecuting && !bIsPaused)
     {
         UE_LOG(LogTemp, Warning,
@@ -131,8 +131,8 @@ void ARobotCharacter::ExecuteProgram()
     bIsPaused    = false;
 
     UE_LOG(LogTemp, Log,
-        TEXT("ARobotCharacter: Executing program — %d instruction(s), starting at IP=%d"),
-        CurrentProgram.Num(), InstructionPointer);
+        TEXT("ARobotCharacter: Executing program — %d instruction(s)"),
+        CurrentProgram.Num());
 
     ExecuteCurrentInstruction();
 }

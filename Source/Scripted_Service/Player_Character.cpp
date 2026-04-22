@@ -195,7 +195,11 @@ void APlayer_Character::Interact()
 
 		const bool bIsGrabable = HitActor->Implements<UGrabableInterface>();
 
-		if (bIsGrabable)
+		if (HitActor->Implements<UInteractInterface>())
+		{
+			IInteractInterface::Execute_Interact(HitActor);
+		}
+		else if (bIsGrabable)
 		{
 			UPrimitiveComponent* HitComponent = Hit.GetComponent();
 			FVector HitLocation = HitActor->GetActorLocation();
@@ -211,10 +215,6 @@ void APlayer_Character::Interact()
 			ABaseIngredient* HitIngredient = Cast<ABaseIngredient>(HitActor);
 			HeldItem = HitIngredient;
 			OnPlayerGrabItem.Broadcast(true);
-		}
-		else if (HitActor->Implements<UInteractInterface>())
-		{
-			IInteractInterface::Execute_Interact(HitActor);
 		}
 	}
 }
@@ -234,7 +234,7 @@ void APlayer_Character::ToggleMenu()
 	if (!ProgrammingMenuInstance)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Player_Character::ToggleMenu — "
-			"ProgrammingMenuInstance is null. Did you set ProgrammingMenuClass?"));
+			"ProgrammingMenuInstance is null"));
 		return;
 	}
 
@@ -274,6 +274,17 @@ void APlayer_Character::ToggleMenu()
 		PC->bShowMouseCursor = true;
 
 		UE_LOG(LogTemp, Log, TEXT("Programming menu opened — UI input mode active"));
+	}
+}
+
+void APlayer_Character::CloseActiveUI()
+{
+	if (bIsOSOpen)
+	{
+		CloseRobotOS();
+	} else if (bIsMenuOpen)
+	{
+		ToggleMenu();
 	}
 }
 
@@ -421,6 +432,6 @@ void APlayer_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		EnhancedInputComponent->BindAction(ToggleMenuAction, ETriggerEvent::Started,   this, &APlayer_Character::ToggleMenu);
-		EnhancedInputComponent->BindAction(CloseAction, ETriggerEvent::Triggered, this, &APlayer_Character::CloseRobotOS);
+		EnhancedInputComponent->BindAction(CloseAction, ETriggerEvent::Triggered, this, &APlayer_Character::CloseActiveUI);
 	}
 }

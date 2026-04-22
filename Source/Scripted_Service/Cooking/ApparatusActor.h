@@ -7,10 +7,8 @@
 #include "GameFramework/Actor.h"
 #include "TimerManager.h"
 #include "Sound/SoundBase.h"
-#include "Components/AudioComponent.h"
-#include "kismet/GameplayStatics.h"
-#include "Particles/ParticleSystem.h"
-#include "Particles/ParticleSystemComponent.h"
+#include "Components/WidgetComponent.h"
+#include "CookingProgressWidget.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/DataTable.h"
@@ -69,7 +67,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Effects")
 	UParticleSystemComponent* ActiveLoopParticles;
 
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UWidgetComponent* CookingProgressComponent;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UCookingProgressWidget> CookingProgressWidgetClass;
 	
 	// SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
@@ -103,6 +105,9 @@ protected:
 	UFUNCTION()
 	void FinishCooking();
 
+	UFUNCTION(BlueprintPure)
+	float GetCookingProgress() const;
+	
 	UFUNCTION()
 	virtual void OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,

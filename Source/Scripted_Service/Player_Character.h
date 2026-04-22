@@ -86,6 +86,8 @@ public:
 	void Drop();
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ToggleMenu();
+	UFUNCTION()
+	void CloseActiveUI();
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void OpenRobotOS(ARobotCharacter* Robot);

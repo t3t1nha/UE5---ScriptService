@@ -3,6 +3,10 @@
 
 #include "ApparatusActor.h"
 #include "BaseIngredient.h"
+#include "Components/AudioComponent.h"
+#include "kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
+#include "Particles/ParticleSystemComponent.h"
 
 
 // Sets default values
@@ -16,6 +20,13 @@ AApparatusActor::AApparatusActor()
 	DropZoneComponent = CreateDefaultSubobject<UBoxComponent>(FName("DropZone"));
 	DropZoneComponent->SetupAttachment(ApparatusMeshComponent);
 	DropZoneComponent->SetCollisionProfileName(FName("OverlapAll"));
+
+	CookingProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("CookingProgressComponent"));
+	CookingProgressComponent->SetupAttachment(ApparatusMeshComponent);
+	CookingProgressComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	CookingProgressComponent->SetDrawSize(FVector2D(200.f, 40.f));
+	CookingProgressComponent->SetVisibility(true);
+	CookingProgressComponent->SetRelativeLocation(FVector(0.f, 0.f, 120.f));
 }
 
 // Called when the game starts or when spawned
@@ -27,6 +38,11 @@ void AApparatusActor::BeginPlay()
 	{
 		// DropZoneComponent->OnComponentBeginOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapBegin);
 		DropZoneComponent->OnComponentEndOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapEnd);
+	}
+
+	if (CookingProgressComponent && CookingProgressWidgetClass)
+	{
+		CookingProgressComponent->SetWidgetClass(CookingProgressWidgetClass);
 	}
 }
 
@@ -171,6 +187,19 @@ void AApparatusActor::StartCookingProcess()
 			false
 		);
 
+		if (CookingProgressComponent && CookingProgressWidgetClass)
+		{
+			CookingProgressComponent->SetVisibility(true);
+			
+			UCookingProgressWidget* ProgressWidget = Cast<UCookingProgressWidget>(
+				CookingProgressComponent->GetUserWidgetObject());
+
+			if (ProgressWidget)
+			{
+				ProgressWidget->OwningApparatus = this;
+			}
+		}
+		
 		const FVector ParticleLocation = DropZoneComponent->GetComponentLocation();
 		
 		if (CookingLoopParticles)
@@ -224,6 +253,11 @@ void AApparatusActor::FinishCooking()
 {
 	GetWorldTimerManager().ClearTimer(CookingTimerHandle);
 
+	if (CookingProgressComponent)
+	{
+		CookingProgressComponent->SetVisibility(false);
+	}
+	
 	if (ActiveLoopParticles)
 	{
 		ActiveLoopParticles->DeactivateSystem();
@@ -266,8 +300,27 @@ void AApparatusActor::FinishCooking()
 	}
 }
 
+float AApparatusActor::GetCookingProgress() const
+{
+	if (!GetWorldTimerManager().IsTimerActive(CookingTimerHandle))
+	{
+		return 0.0f;
+	}
+	
+	const float Elapsed   = GetWorldTimerManager().GetTimerElapsed(CookingTimerHandle);
+	const float Remaining = GetWorldTimerManager().GetTimerRemaining(CookingTimerHandle);
+	const float Total     = Elapsed + Remaining;
+		
+	if (Total <= 0.0f)
+	{
+		return 0.0f;
+	}
+	
+	return FMath::Clamp(Elapsed / Total, 0.0f, 1.0f);
+}
+
 void AApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                             UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor)
 	{
