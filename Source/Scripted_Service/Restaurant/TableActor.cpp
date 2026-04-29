@@ -16,7 +16,7 @@ ATableActor::ATableActor()
 	OrderIndicatorComponent->SetupAttachment(TableMesh);
 	OrderIndicatorComponent->SetWidgetSpace(EWidgetSpace::World);
 	OrderIndicatorComponent->SetDrawAtDesiredSize(true);
-	OrderIndicatorComponent->SetVisibility(false);
+	OrderIndicatorComponent->SetVisibility(true);
 }
 
 void ATableActor::BeginPlay()
@@ -30,14 +30,10 @@ void ATableActor::BeginPlay()
 
 	OrderIndicatorComponent->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
  
-	// If a widget class was assigned, create the widget instance and cache it.
 	if (OrderWidgetClass)
 	{
-		// SetWidgetClass() tells the component which UUserWidget to spawn.
-		// The component manages the widget's lifetime automatically.
 		OrderIndicatorComponent->SetWidgetClass(OrderWidgetClass);
  
-		// GetUserWidgetObject() returns the live instance after SetWidgetClass().
 		OrderWidgetInstance =
 			Cast<UOrderWidget>(OrderIndicatorComponent->GetUserWidgetObject());
  

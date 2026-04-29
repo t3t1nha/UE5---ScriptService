@@ -23,10 +23,9 @@ AApparatusActor::AApparatusActor()
 
 	CookingProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("CookingProgressComponent"));
 	CookingProgressComponent->SetupAttachment(ApparatusMeshComponent);
-	CookingProgressComponent->SetWidgetSpace(EWidgetSpace::Screen);
-	CookingProgressComponent->SetDrawSize(FVector2D(200.f, 40.f));
+	CookingProgressComponent->SetWidgetSpace(EWidgetSpace::World);
+	CookingProgressComponent->SetDrawAtDesiredSize(true);
 	CookingProgressComponent->SetVisibility(true);
-	CookingProgressComponent->SetRelativeLocation(FVector(0.f, 0.f, 120.f));
 }
 
 // Called when the game starts or when spawned
@@ -36,13 +35,19 @@ void AApparatusActor::BeginPlay()
 
 	if (DropZoneComponent)
 	{
-		// DropZoneComponent->OnComponentBeginOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapBegin);
 		DropZoneComponent->OnComponentEndOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapEnd);
 	}
 
-	if (CookingProgressComponent && CookingProgressWidgetClass)
+	if (!CookingProgressComponent)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "No CookingProgressComponent");
+		return;
+	}
+	
+	if (CookingProgressWidgetClass)
 	{
 		CookingProgressComponent->SetWidgetClass(CookingProgressWidgetClass);
+		CookingProgressComponent->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
 	}
 }
 

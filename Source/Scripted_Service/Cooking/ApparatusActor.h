@@ -39,6 +39,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Cooking")
 	void SnapIngredient(ABaseIngredient* ToSnapIngredient);
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UWidgetComponent* CookingProgressComponent;
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -66,9 +69,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Effects")
 	UParticleSystemComponent* ActiveLoopParticles;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UWidgetComponent* CookingProgressComponent;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UCookingProgressWidget> CookingProgressWidgetClass;

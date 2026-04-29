@@ -11,7 +11,7 @@ AKitchenCounter::AKitchenCounter()
     RootComponent = CounterMesh;
     
     PickupZone = CreateDefaultSubobject<UBoxComponent>(TEXT("PickupZone"));
-    RootComponent->SetupAttachment(RootComponent);
+    PickupZone->SetupAttachment(RootComponent);
     PickupZone->SetBoxExtent(FVector(100.0f, 100.0f, 50.0f));
 }
 
