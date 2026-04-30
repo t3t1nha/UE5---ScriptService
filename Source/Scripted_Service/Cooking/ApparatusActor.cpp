@@ -263,12 +263,6 @@ void AApparatusActor::FinishCooking()
 		CookingProgressComponent->SetVisibility(false);
 	}
 	
-	if (ActiveLoopParticles)
-	{
-		ActiveLoopParticles->DeactivateSystem();
-		ActiveLoopParticles = nullptr;
-	}
-	
 	if (ActiveLoopSound)
 	{
 		if (CookingFinishSound)
@@ -302,6 +296,12 @@ void AApparatusActor::FinishCooking()
 		CurrentIngredientActors.Empty();
 		CurrentIngredients.Empty();
 		CurrentRecipeData = FRecipeData();
+	}
+
+	if (ActiveLoopParticles)
+	{
+		ActiveLoopParticles->DeactivateSystem();
+		ActiveLoopParticles = nullptr;
 	}
 }
 

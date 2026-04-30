@@ -473,7 +473,6 @@ void ARobotCharacter::ExecuteCurrentInstruction()
     }
 
     Command->Execute();
-    // ── async gap — next step driven by OnCommandComplete / OnCommandError ────
 }
 
 void ARobotCharacter::OnCommandComplete()
@@ -492,16 +491,14 @@ void ARobotCharacter::OnCommandComplete()
 
 void ARobotCharacter::OnCommandError(FString ErrorMessage)
 {
-    UE_LOG(LogTemp, Error,
-        TEXT("ARobotCharacter: Command failed at IP=%d — %s"),
-        InstructionPointer, *ErrorMessage);
-
     if (GEngine)
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red,
-            FString::Printf(TEXT("❌  ERROR: %s"), *ErrorMessage));
+            FString::Printf(TEXT("ERROR: "), *ErrorMessage));
     }
 
+    OnCommandErro.Broadcast(ErrorMessage);
+    
     CurrentCommand = nullptr;
     bIsExecuting   = false;
 }

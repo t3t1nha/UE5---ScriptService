@@ -37,6 +37,11 @@ APlayer_Character::APlayer_Character()
 	PhysicsHandleComponent->RegisterComponent(); 
 }
 
+void APlayer_Character::OnRobotFailCommandFunc(FString ErrorMessageText)
+{
+	OnRobotFailCommand.Broadcast(ErrorMessageText);
+}
+
 // Called when the game starts or when spawned
 void APlayer_Character::BeginPlay()
 {
@@ -44,6 +49,8 @@ void APlayer_Character::BeginPlay()
 	
 	check(GEngine != nullptr);
 
+	targetRobot->OnCommandErro.AddDynamic(this, &APlayer_Character::OnRobotFailCommandFunc);
+	
 	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
 
 	FirstPersonMeshComponent->SetAnimInstanceClass(FirstPersonDefaultAnim->GeneratedClass);

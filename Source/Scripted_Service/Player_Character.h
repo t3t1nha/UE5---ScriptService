@@ -25,6 +25,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
 	FOnPlayerGrabItem,
 	bool, bisHoldingItem);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+	FOnRobotFailCommand,
+	FString, ErrorMessageText);
+
 UCLASS()
 class SCRIPTED_SERVICE_API APlayer_Character : public ACharacter
 {
@@ -36,6 +40,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnPlayerGrabItem OnPlayerGrabItem;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnRobotFailCommand OnRobotFailCommand;
+
+	UFUNCTION()
+	void OnRobotFailCommandFunc(FString ErrorMessageText);
 	
 protected:
 	virtual void BeginPlay() override;

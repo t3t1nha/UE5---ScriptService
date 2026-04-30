@@ -9,6 +9,10 @@
 #include "IProgrammable.h"
 #include "RobotCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+    FOnCommandErro,
+    FString, ErrorMessageText);
+
 /**
  */
 UCLASS()
@@ -19,6 +23,9 @@ class SCRIPTED_SERVICE_API ARobotCharacter : public ACharacter, public IInteract
 public:
     ARobotCharacter();
 
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FOnCommandErro OnCommandErro;
+    
     /** The flat bytecode array loaded from the Programming Menu */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Robot|Program")
     TArray<FRobotInstruction> CurrentProgram;

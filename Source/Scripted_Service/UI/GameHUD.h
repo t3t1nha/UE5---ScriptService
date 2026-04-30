@@ -42,6 +42,9 @@ public:
 
     UFUNCTION(BlueprintImplementableEvent)
     void OnGrabItem(bool isHolding);
+
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnRobotFailCommand(FString ErrorMessageText);
     
     UFUNCTION(BlueprintImplementableEvent)
     void OnTipsChanged(float TipsIncreaseValue);
@@ -52,7 +55,7 @@ protected:
      * Called once when the widget is first created and added to the viewport.
      */
     virtual void NativeConstruct() override;
-
+    
 private:
     
     float Tips = -1.0f;

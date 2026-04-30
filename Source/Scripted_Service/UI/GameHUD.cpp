@@ -31,6 +31,7 @@ void UGameHUD::NativeConstruct()
     if (PC)
     {
         PC->OnPlayerGrabItem.AddDynamic(this, &UGameHUD::OnGrabItem);
+        PC->OnRobotFailCommand.AddDynamic(this, &UGameHUD::OnRobotFailCommand);
     }
 }
 void UGameHUD::RefreshStats(int32 Score, float TotalTips,
