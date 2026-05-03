@@ -48,8 +48,6 @@ void APlayer_Character::BeginPlay()
 	Super::BeginPlay();
 	
 	check(GEngine != nullptr);
-
-	targetRobot->OnCommandErro.AddDynamic(this, &APlayer_Character::OnRobotFailCommandFunc);
 	
 	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
 
@@ -310,18 +308,17 @@ void APlayer_Character::OpenRobotOS(ARobotCharacter* Robot)
 	}
 
 	bRobotWasPausedOnOpen = Robot->bIsExecuting && Robot->bIsPaused;
-	Robot = Robot;
+	targetRobot = Robot;
 
-	// ── Initialize and show ───────────────────────────────────────────────────
+	targetRobot->OnCommandErro.AddUniqueDynamic(
+		this, &APlayer_Character::OnRobotFailCommandFunc);
+
 	RobotOSInstance->InitializeOS(Robot);
 	RobotOSInstance->SetVisibility(ESlateVisibility::Visible);
  
-	// ── Input mode ────────────────────────────────────────────────────────────
 	APlayerController* PC = Cast<APlayerController>(Controller);
 	if (PC)
 	{
-		// GameAndUI: game movement is blocked by our bIsMenuOpen guard in Move/Look,
-		// but the Enhanced Input bindings (CloseOSAction etc.) still fire.
 		FInputModeGameAndUI GameAndUIMode;
 		GameAndUIMode.SetWidgetToFocus(RobotOSInstance->TakeWidget());
 		GameAndUIMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
@@ -329,7 +326,6 @@ void APlayer_Character::OpenRobotOS(ARobotCharacter* Robot)
 		PC->bShowMouseCursor = true;
 	}
  
-	// Suppress Move / Look / Interact
 	bIsMenuOpen = true;
 	bIsOSOpen   = true;
  
@@ -342,19 +338,16 @@ void APlayer_Character::OpenRobotOS(ARobotCharacter* Robot)
 
 void APlayer_Character::CloseRobotOS()
 {
-	// Guard against spurious calls (e.g. ESC pressed when OS is already closed)
     if (!bIsOSOpen)
     {
         return;
     }
  
-    // ── Hide the overlay ──────────────────────────────────────────────────────
     if (RobotOSInstance)
     {
         RobotOSInstance->SetVisibility(ESlateVisibility::Collapsed);
     }
  
-    // ── Restore game input ────────────────────────────────────────────────────
     APlayerController* PC = Cast<APlayerController>(Controller);
     if (PC)
     {
@@ -366,16 +359,6 @@ void APlayer_Character::CloseRobotOS()
     bIsMenuOpen = false;
     bIsOSOpen   = false;
  
-    // ── Robot resume logic ────────────────────────────────────────────────────
-    //
-    // We auto-resume ONLY if ALL of the following are true:
-    //   a) The robot had a program paused when the OS opened  (bRobotWasPausedOnOSOpen)
-    //   b) The robot is still in a paused state right now     (bIsExecuting && bIsPaused)
-    //      → This would be false if the player pressed Run inside the OS, which
-    //        started a fresh execution and the robot is no longer paused.
-    //   c) The player made NO changes to the program sequence (HasPendingChanges == false)
-    //      → If dirty, the player must press Run to commit changes explicitly.
-    //
     if (targetRobot)
     {
         const bool bStillPaused =
