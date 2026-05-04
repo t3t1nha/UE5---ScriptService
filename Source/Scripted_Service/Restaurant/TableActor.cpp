@@ -16,7 +16,7 @@ ATableActor::ATableActor()
 	OrderIndicatorComponent->SetupAttachment(TableMesh);
 	OrderIndicatorComponent->SetWidgetSpace(EWidgetSpace::World);
 	OrderIndicatorComponent->SetDrawAtDesiredSize(true);
-	OrderIndicatorComponent->SetVisibility(true);
+	OrderIndicatorComponent->SetVisibility(false);
 }
 
 void ATableActor::BeginPlay()
@@ -27,7 +27,7 @@ void ATableActor::BeginPlay()
 	CurrentOrder.RequestedDish = nullptr;
 	CurrentOrder.TableNumber   = TableNumber;
 	CurrentOrder.TimeWaiting   = 0.0f;
-
+	
 	OrderIndicatorComponent->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
  
 	if (OrderWidgetClass)

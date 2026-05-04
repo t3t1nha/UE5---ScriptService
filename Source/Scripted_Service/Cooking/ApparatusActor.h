@@ -96,6 +96,10 @@ protected:
 
 	FTimerHandle CookingTimerHandle;
 
+	FTimerHandle ProgressUpdateTimerHandle;
+
+	void PushProgressToWidget();
+
 	UFUNCTION(BlueprintCallable, Category = "Cooking")
 	void AddIngredient(ABaseIngredient* Ingredient);
 

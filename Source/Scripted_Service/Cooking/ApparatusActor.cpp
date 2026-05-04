@@ -12,20 +12,14 @@
 // Sets default values
 AApparatusActor::AApparatusActor()
 {
- 	PrimaryActorTick.bCanEverTick = false;
-
 	ApparatusMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("ApparatusMesh");
 	SetRootComponent(ApparatusMeshComponent);
+
+	CookingProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("CookingProgressComponent"));
 	
 	DropZoneComponent = CreateDefaultSubobject<UBoxComponent>(FName("DropZone"));
 	DropZoneComponent->SetupAttachment(ApparatusMeshComponent);
 	DropZoneComponent->SetCollisionProfileName(FName("OverlapAll"));
-
-	CookingProgressComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("CookingProgressComponent"));
-	CookingProgressComponent->SetupAttachment(ApparatusMeshComponent);
-	CookingProgressComponent->SetWidgetSpace(EWidgetSpace::World);
-	CookingProgressComponent->SetDrawAtDesiredSize(true);
-	CookingProgressComponent->SetVisibility(true);
 }
 
 // Called when the game starts or when spawned
@@ -40,21 +34,71 @@ void AApparatusActor::BeginPlay()
 
 	if (!CookingProgressComponent)
 	{
+		// Try to find it by class — catches both C++ and BP-added widget components
+		TArray<UWidgetComponent*> WidgetComps;
+		GetComponents<UWidgetComponent>(WidgetComps);
+
+		for (UWidgetComponent* Comp : WidgetComps)
+		{
+			// Log every widget component found so we can see what's actually there
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+				TEXT("Found WidgetComponent: ") + Comp->GetName());
+		}
+
+		if (WidgetComps.Num() > 0)
+		{
+			CookingProgressComponent = WidgetComps[0];
+			UE_LOG(LogTemp, Warning,
+				TEXT("CookingProgressComponent recovered via GetComponents fallback."));
+		}
+	}
+	
+	if (!CookingProgressComponent)
+	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "No CookingProgressComponent");
 		return;
 	}
 	
 	if (CookingProgressWidgetClass)
 	{
+		CookingProgressComponent->SetRelativeLocation(FVector(0.f, 0.f, 255.f));
+		CookingProgressComponent->SetupAttachment(ApparatusMeshComponent);
+		CookingProgressComponent->SetWidgetSpace(EWidgetSpace::World);
+		CookingProgressComponent->SetDrawAtDesiredSize(false);
+		CookingProgressComponent->SetDrawSize(FVector2D(250.f, 12.5f));
+		CookingProgressComponent->SetRenderCustomDepth(true);
+		CookingProgressComponent->SetVisibility(false);
 		CookingProgressComponent->SetWidgetClass(CookingProgressWidgetClass);
-		CookingProgressComponent->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
 	}
 }
 
 void AApparatusActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	// Only bother rotating if the widget is visible
+	if (!CookingProgressComponent || 
+		!CookingProgressComponent->IsVisible())
+	{
+		return;
+	}
 
+	// Get the player camera location
+	APlayerCameraManager* CameraManager = 
+		UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+        
+	if (!CameraManager) return;
+
+	FVector CameraLocation = CameraManager->GetCameraLocation();
+	FVector WidgetLocation = CookingProgressComponent->GetComponentLocation();
+
+	// Calculate rotation to face camera
+	FVector DirectionToCamera = CameraLocation - WidgetLocation;
+	FRotator LookAtRotation = DirectionToCamera.Rotation();
+
+	// Only rotate on Yaw and Pitch - ignore Roll
+	LookAtRotation.Roll = 0.0f;
+
+	CookingProgressComponent->SetWorldRotation(LookAtRotation);
 }
 
 void AApparatusActor::Interact_Implementation()
@@ -192,17 +236,27 @@ void AApparatusActor::StartCookingProcess()
 			false
 		);
 
-		if (CookingProgressComponent && CookingProgressWidgetClass)
+		if (CookingProgressComponent)
 		{
 			CookingProgressComponent->SetVisibility(true);
-			
+
 			UCookingProgressWidget* ProgressWidget = Cast<UCookingProgressWidget>(
 				CookingProgressComponent->GetUserWidgetObject());
 
 			if (ProgressWidget)
 			{
 				ProgressWidget->OwningApparatus = this;
+				ProgressWidget->UpdateProgress(0.0f);
 			}
+
+			GetWorldTimerManager().ClearTimer(ProgressUpdateTimerHandle);
+			GetWorldTimerManager().SetTimer(
+				ProgressUpdateTimerHandle,
+				this,
+				&AApparatusActor::PushProgressToWidget,
+				0.05f,
+				true   // repeating
+			);
 		}
 		
 		const FVector ParticleLocation = DropZoneComponent->GetComponentLocation();
@@ -260,6 +314,14 @@ void AApparatusActor::FinishCooking()
 
 	if (CookingProgressComponent)
 	{
+		UCookingProgressWidget* ProgressWidget = Cast<UCookingProgressWidget>(
+			CookingProgressComponent->GetUserWidgetObject());
+
+		if (ProgressWidget)
+		{
+			ProgressWidget->UpdateProgress(1.0f);
+		}
+
 		CookingProgressComponent->SetVisibility(false);
 	}
 	
@@ -357,4 +419,12 @@ void AApparatusActor::OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedCompon
 				RemoveIngredient(IngredientActor);
 		}
 	}
+}
+
+void AApparatusActor::PushProgressToWidget()
+{
+	UCookingProgressWidget* ProgressWidget = Cast<UCookingProgressWidget>(
+		CookingProgressComponent->GetUserWidgetObject());
+
+	ProgressWidget->UpdateProgress(GetCookingProgress());
 }
