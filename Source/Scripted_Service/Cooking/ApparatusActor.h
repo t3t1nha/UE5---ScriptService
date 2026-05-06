@@ -38,9 +38,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Cooking")
 	void SnapIngredient(ABaseIngredient* ToSnapIngredient);
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UWidgetComponent* CookingProgressComponent;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnStartCooking();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnFinishCooking();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -69,9 +72,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Effects")
 	UParticleSystemComponent* ActiveLoopParticles;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UCookingProgressWidget> CookingProgressWidgetClass;
 	
 	// SFX
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
@@ -85,7 +85,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Effects")
 	UAudioComponent* ActiveLoopSound;	
-
 	
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
@@ -95,10 +94,6 @@ protected:
 	FRecipeData CurrentRecipeData;
 
 	FTimerHandle CookingTimerHandle;
-
-	FTimerHandle ProgressUpdateTimerHandle;
-
-	void PushProgressToWidget();
 
 	UFUNCTION(BlueprintCallable, Category = "Cooking")
 	void AddIngredient(ABaseIngredient* Ingredient);
