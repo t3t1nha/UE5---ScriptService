@@ -11,10 +11,6 @@ ACustomGameMode::ACustomGameMode()
     PrimaryActorTick.bCanEverTick = false;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  BeginPlay
-// ─────────────────────────────────────────────────────────────────────────────
-
 void ACustomGameMode::BeginPlay()
 {
     Super::BeginPlay();
