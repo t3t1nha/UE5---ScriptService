@@ -25,6 +25,25 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FOnCommandErro OnCommandErro;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Robot|Memory")
+    TArray<FRobotMemorySlot> MemorySlots;
+
+    /** Returns slot[SlotIndex].IntValue, or 0 with a warning if out of range. */
+    UFUNCTION(BlueprintCallable, Category = "Robot|Memory")
+    int32 GetSlotValue(int32 SlotIndex) const;
+
+    /** Writes Value to slot[SlotIndex] and marks it as set. */
+    UFUNCTION(BlueprintCallable, Category = "Robot|Memory")
+    void SetSlotValue(int32 SlotIndex, int32 Value);
+
+    /** Marks slot[SlotIndex] as unset and resets its value to 0. */
+    UFUNCTION(BlueprintCallable, Category = "Robot|Memory")
+    void ClearSlot(int32 SlotIndex);
+
+    /** Resets all four slots to their default unset state. Called on fresh ExecuteProgram(). */
+    UFUNCTION(BlueprintCallable, Category = "Robot|Memory")
+    void ClearAllSlots();
     
     /** The flat bytecode array loaded from the Programming Menu */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Robot|Program")
@@ -158,4 +177,26 @@ private:
      * @param ErrorMessage  Human-readable description of the failure.
      */
     void OnCommandError(FString ErrorMessage);
+
+    /**
+    * Resolves the effective table number for an instruction.
+    *
+    * If Instr.bReadTableFromSlot is true, returns MemorySlots[Instr.ReadFromSlotIndex].IntValue.
+    * Otherwise returns Instr.TargetTableNumber directly.
+    *
+    * Logs a warning and falls back to the literal if the slot index is invalid
+    * or the slot has never been written.
+    */
+    int32 ResolveTableNumber(const FRobotInstruction& Instr) const;
+
+    /**
+     * Returns a copy of Instr with all variable references resolved to concrete values.
+     * Specifically: if bReadTableFromSlot is true, TargetTableNumber is replaced with
+     * the slot's current value.
+     *
+     * This is called once per instruction dispatch so every downstream consumer
+     * (CreateCommandFromInstruction, condition checks) always sees a plain literal.
+     */
+    FRobotInstruction ResolveInstruction(const FRobotInstruction& Instr) const;
+    
 };

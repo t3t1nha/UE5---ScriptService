@@ -155,7 +155,8 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	virtual void Tick(float DeltaTime) override;
+	
 private:
 	/** Fires GenerateRandomOrder() after a random delay */
 	FTimerHandle OrderGenerationTimerHandle;

@@ -14,6 +14,8 @@ TArray<FBlockData> UBlockLibrary::GetDefaultBlocks()
     MoveToTable.BlockColor = FLinearColor(0.2f, 0.5f, 1.0f);
     MoveToTable.Category = "Movement";
     MoveToTable.bHasTableParameter = true;
+    MoveToTable.bCanReadTableFromSlot = true;
+    MoveToTable.bCanSaveToSlot        = true; 
     Blocks.Add(MoveToTable);
     
     // Move to Kitchen block
@@ -31,6 +33,8 @@ TArray<FBlockData> UBlockLibrary::GetDefaultBlocks()
     TakeOrder.BlockColor = FLinearColor(1.0f, 0.7f, 0.2f); 
     TakeOrder.Category = "Actions";
     TakeOrder.bHasTableParameter = true;
+    MoveToTable.bCanReadTableFromSlot = true;
+    MoveToTable.bCanSaveToSlot        = true; 
     Blocks.Add(TakeOrder);
     
     // Pickup Food block
@@ -61,10 +65,11 @@ TArray<FBlockData> UBlockLibrary::GetDefaultBlocks()
     FBlockData IfTableHasOrder;
     IfTableHasOrder.InstructionType    = EInstructionType::IfTableHasOrder;
     IfTableHasOrder.DisplayName        = FText::FromString("If Table Has Order");
-    IfTableHasOrder.BlockColor         = FLinearColor(1.0f, 0.85f, 0.1f); // Gold
+    IfTableHasOrder.BlockColor         = FLinearColor(1.0f, 0.85f, 0.1f);
     IfTableHasOrder.Category           = "Logic";
-    IfTableHasOrder.bIsContainerBlock  = true;  // Spawns ContainerBlockWidget
-    IfTableHasOrder.bHasTableParameter = true;  // Shows table number input
+    IfTableHasOrder.bIsContainerBlock  = true;
+    IfTableHasOrder.bHasTableParameter = true;
+    IfTableHasOrder.bCanReadTableFromSlot = true;
     Blocks.Add(IfTableHasOrder);
 
     FBlockData IfCarrying;
@@ -86,10 +91,10 @@ TArray<FBlockData> UBlockLibrary::GetDefaultBlocks()
     FBlockData RepeatLoop;
     RepeatLoop.InstructionType        = EInstructionType::RepeatLoop;
     RepeatLoop.DisplayName            = FText::FromString("Repeat");
-    RepeatLoop.BlockColor             = FLinearColor(0.8f, 0.3f, 1.0f); // Purple
+    RepeatLoop.BlockColor             = FLinearColor(0.8f, 0.3f, 1.0f);
     RepeatLoop.Category               = "Logic";
     RepeatLoop.bIsContainerBlock      = true;
-    RepeatLoop.bHasLoopCountParameter = true; // Shows loop count input
+    RepeatLoop.bHasLoopCountParameter = true;
     Blocks.Add(RepeatLoop);
 
     FBlockData LoopForever;
@@ -99,6 +104,80 @@ TArray<FBlockData> UBlockLibrary::GetDefaultBlocks()
     LoopForever.Category          = "Logic";
     LoopForever.bIsContainerBlock = true;
     Blocks.Add(LoopForever);
+
+    FBlockData SetSlotBlock;
+    SetSlotBlock.InstructionType       = EInstructionType::SetSlot;
+    SetSlotBlock.DisplayName           = FText::FromString(TEXT("Set Slot"));
+    SetSlotBlock.BlockColor            = FLinearColor(0.3f, 0.85f, 0.55f); 
+    SetSlotBlock.Category              = "Memory";
+    SetSlotBlock.bHasSlotIndexParameter = true; 
+    SetSlotBlock.bHasSlotValueParameter = true; 
+    Blocks.Add(SetSlotBlock);
+    
+    FBlockData IncrSlotBlock;
+    IncrSlotBlock.InstructionType        = EInstructionType::IncrementSlot;
+    IncrSlotBlock.DisplayName            = FText::FromString(TEXT("Increment Slot"));
+    IncrSlotBlock.BlockColor             = FLinearColor(0.3f, 0.85f, 0.55f);
+    IncrSlotBlock.Category               = "Memory";
+    IncrSlotBlock.bHasSlotIndexParameter = true;
+    Blocks.Add(IncrSlotBlock);
+    
+    FBlockData DecrSlotBlock;
+    DecrSlotBlock.InstructionType        = EInstructionType::DecrementSlot;
+    DecrSlotBlock.DisplayName            = FText::FromString(TEXT("Decrement Slot"));
+    DecrSlotBlock.BlockColor             = FLinearColor(0.3f, 0.85f, 0.55f);
+    DecrSlotBlock.Category               = "Memory";
+    DecrSlotBlock.bHasSlotIndexParameter = true;
+    Blocks.Add(DecrSlotBlock);
+    
+    FBlockData IfSlotEqBlock;
+    IfSlotEqBlock.InstructionType        = EInstructionType::IfSlotEquals;
+    IfSlotEqBlock.DisplayName            = FText::FromString(TEXT("If Slot = Value"));
+    IfSlotEqBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
+    IfSlotEqBlock.Category               = "Memory";
+    IfSlotEqBlock.bIsContainerBlock      = true;
+    IfSlotEqBlock.bHasSlotIndexParameter = true;
+    IfSlotEqBlock.bHasSlotValueParameter = true;
+    Blocks.Add(IfSlotEqBlock);
+    
+    FBlockData IfSlotGtBlock;
+    IfSlotGtBlock.InstructionType        = EInstructionType::IfSlotGreaterThan;
+    IfSlotGtBlock.DisplayName            = FText::FromString(TEXT("If Slot > Value"));
+    IfSlotGtBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
+    IfSlotGtBlock.Category               = "Memory";
+    IfSlotGtBlock.bIsContainerBlock      = true;
+    IfSlotGtBlock.bHasSlotIndexParameter = true;
+    IfSlotGtBlock.bHasSlotValueParameter = true;
+    Blocks.Add(IfSlotGtBlock);
+    
+    FBlockData IfSlotLtBlock;
+    IfSlotLtBlock.InstructionType        = EInstructionType::IfSlotLessThan;
+    IfSlotLtBlock.DisplayName            = FText::FromString(TEXT("If Slot < Value"));
+    IfSlotLtBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
+    IfSlotLtBlock.Category               = "Memory";
+    IfSlotLtBlock.bIsContainerBlock      = true;
+    IfSlotLtBlock.bHasSlotIndexParameter = true;
+    IfSlotLtBlock.bHasSlotValueParameter = true;
+    Blocks.Add(IfSlotLtBlock);
+    
+    FBlockData IfKitchenBlock;
+    IfKitchenBlock.InstructionType   = EInstructionType::IfKitchenHasOrder;
+    IfKitchenBlock.DisplayName       = FText::FromString(TEXT("If Kitchen Ready"));
+    IfKitchenBlock.BlockColor        = FLinearColor(1.0f, 0.5f, 0.15f);
+    IfKitchenBlock.Category          = "Logic";
+    IfKitchenBlock.bIsContainerBlock = true;
+    Blocks.Add(IfKitchenBlock);
+    
+    FBlockData IfWaitBlock;
+    IfWaitBlock.InstructionType        = EInstructionType::IfTableWaitingTooLong;
+    IfWaitBlock.DisplayName            = FText::FromString(TEXT("If Table Waiting Too Long"));
+    IfWaitBlock.BlockColor             = FLinearColor(1.0f, 0.5f, 0.15f);
+    IfWaitBlock.Category               = "Logic";
+    IfWaitBlock.bIsContainerBlock      = true;
+    IfWaitBlock.bHasTableParameter     = true;
+    IfWaitBlock.bCanReadTableFromSlot  = true; 
+    IfWaitBlock.bHasSlotValueParameter = true;  
+    Blocks.Add(IfWaitBlock);
     
     return Blocks;
 }

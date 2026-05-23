@@ -54,58 +54,36 @@ void UProgrammingMenu::PopulatePalette()
 {
 	if (!PaletteBox)
 	{
-		UE_LOG(LogTemp, Error,
-			TEXT("ProgrammingMenu: PaletteBox is null. "
-				 "Add a WrapBox named 'PaletteBox' to the Blueprint layout."));
+		UE_LOG(LogTemp, Error, TEXT("ProgrammingMenu: PaletteBox (ScrollBox) is null."));
 		return;
 	}
 
-	if (!BlockWidgetClass)
-	{
-		UE_LOG(LogTemp, Error,
-			TEXT("ProgrammingMenu: BlockWidgetClass is not set. "
-				 "Assign a UBlockWidget subclass in the Blueprint defaults."));
-		return;
-	}
-
-	// Clear any previously created palette entries before rebuilding
 	PaletteBox->ClearChildren();
 
-	if (SequenceWidget)
-	{
-		SequenceWidget->ContainerBlockWidgetClass = ContainerBlockWidgetClass;
-	}
-
-	// Fetch the canonical list of available instruction blocks
 	const TArray<FBlockData> DefaultBlocks = UBlockLibrary::GetDefaultBlocks();
 
 	for (const FBlockData& BlockData : DefaultBlocks)
 	{
-		UBlockWidget* PaletteBlock =
-			CreateWidget<UBlockWidget>(GetOwningPlayer(), BlockWidgetClass);
+		UBlockWidget* PaletteBlock = CreateWidget<UBlockWidget>(GetOwningPlayer(), BlockWidgetClass);
 
-		if (!PaletteBlock)
+		if (PaletteBlock)
 		{
-			UE_LOG(LogTemp, Error,
-				TEXT("ProgrammingMenu: Failed to create palette block for '%s'"),
-				*BlockData.DisplayName.ToString());
-			continue;
-		}
+			PaletteBlock->InitializeBlock(BlockData);
 
-		// Apply colours, label, and parameter visibility
-		PaletteBlock->InitializeBlock(BlockData);
-
-		// Add to the wrap-box; each block gets a small margin for breathing room
-		UWrapBoxSlot* PaletteSlot = PaletteBox->AddChildToWrapBox(PaletteBlock);
-		if (PaletteSlot)
-		{
-			PaletteSlot->SetPadding(FMargin(4.0f));
+			// 2. Add to ScrollBox
+			// AddChild returns a UPanelSlot, which we cast to UScrollBoxSlot to access padding
+			class UScrollBoxSlot* PaletteSlot = Cast<UScrollBoxSlot>(PaletteBox->AddChild(PaletteBlock));
+        
+			if (PaletteSlot)
+			{
+				// This applies space between your vertical blocks
+				PaletteSlot->SetPadding(FMargin(0.0f, 4.0f)); 
+            
+				// 3. Force the block to stretch across the full width of the ScrollBox
+				PaletteSlot->SetHorizontalAlignment(HAlign_Fill);
+			}
 		}
 	}
-
-	UE_LOG(LogTemp, Log,
-		TEXT("ProgrammingMenu: Palette populated with %d block(s)"),
-		DefaultBlocks.Num());
 }
 
 void UProgrammingMenu::RunProgram()

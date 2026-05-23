@@ -59,10 +59,19 @@ enum class EInstructionType : uint8
 	PickupFood,
 	DeliverOrder,
 	Wait,
+	SetSlot,
+	IncrementSlot,
+	DecrementSlot,
 
 	IfTableHasOrder,
 	IfCarryingDish,
 	IfNotCarryingDish,
+	IfSlotEquals,
+	IfSlotGreaterThan,
+	IfSlotLessThan,
+
+	IfKitchenHasOrder,
+	IfTableWaitingTooLong,
 
 	RepeatLoop,
 	LoopForever,

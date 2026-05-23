@@ -36,6 +36,15 @@ ARobotCharacter::ARobotCharacter()
     CurrentCommand     = nullptr;
 
     TableManager       = nullptr;
+
+    static const FName DefaultSlotNames[] = { TEXT("A"), TEXT("B"), TEXT("C"), TEXT("D") };
+    MemorySlots.SetNum(4);
+    for (int32 i = 0; i < 4; i++)
+    {
+        MemorySlots[i].SlotName    = DefaultSlotNames[i];
+        MemorySlots[i].IntValue    = 0;
+        MemorySlots[i].bIsSet      = false;
+    }
 }
 
 void ARobotCharacter::BeginPlay()
@@ -119,12 +128,13 @@ void ARobotCharacter::ExecuteProgram()
 
     if (!bIsPaused)
     {
-        // Fresh start — reset ALL interpreter state so a re-run is clean
         InstructionPointer = 0;
         ExecutionStack.Empty();
         CurrentOrder       = FOrderData();
         CarryingDish       = nullptr;
         CurrentCommand     = nullptr;
+
+        ClearAllSlots();
     }
 
     bIsExecuting = true;
@@ -239,7 +249,6 @@ int32 ARobotCharacter::GetProgramLength() const
 
 void ARobotCharacter::ExecuteCurrentInstruction()
 {
-    // Guard: do nothing while paused
     if (bIsPaused)
     {
         return;
@@ -274,18 +283,24 @@ void ARobotCharacter::ExecuteCurrentInstruction()
 
         if (TableManager)
         {
-            if (ATableActor* Table = TableManager->FindTableByNumber(Instr.TargetTableNumber))
+            const int32 ResolvedTable = ResolveTableNumber(Instr);
+            if (ATableActor* Table = TableManager->FindTableByNumber(ResolvedTable))
             {
                 if (IOrderable* Ord = Cast<IOrderable>(Table))
                 {
                     bCondition = Ord->HasPendingOrder();
                 }
             }
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning,
-                TEXT("ARobotCharacter: IfTableHasOrder — no TableManager, condition is FALSE."));
+
+            UE_LOG(LogTemp, Log,
+            TEXT("ARobotCharacter: IfTableHasOrder(Table %d) → %s"),
+            ResolveTableNumber(Instr), bCondition ? TEXT("TRUE") : TEXT("FALSE"));
+
+            if (bCondition) InstructionPointer++;
+            else            InstructionPointer = FindMatchingEndBlock(InstructionPointer) + 1;
+
+            ExecuteCurrentInstruction();
+            return;
         }
 
         UE_LOG(LogTemp, Log,
@@ -362,7 +377,7 @@ void ARobotCharacter::ExecuteCurrentInstruction()
 
         FExecFrame Frame;
         Frame.LoopStartIndex      = InstructionPointer;
-        Frame.RemainingIterations = -1; // Sentinel: run forever
+        Frame.RemainingIterations = -1;
         ExecutionStack.Push(Frame);
 
         InstructionPointer++;
@@ -379,8 +394,6 @@ void ARobotCharacter::ExecuteCurrentInstruction()
 
             if (bForever)
             {
-                // Jump back to first instruction inside the loop body (IP of
-                // LoopForever is Frame.LoopStartIndex, so body starts at +1)
                 InstructionPointer = Frame.LoopStartIndex + 1;
 
                 UE_LOG(LogTemp, Verbose,
@@ -393,7 +406,6 @@ void ARobotCharacter::ExecuteCurrentInstruction()
 
                 if (Frame.RemainingIterations > 0)
                 {
-                    // More iterations remain — jump back to body start
                     InstructionPointer = Frame.LoopStartIndex + 1;
 
                     UE_LOG(LogTemp, Verbose,
@@ -403,7 +415,6 @@ void ARobotCharacter::ExecuteCurrentInstruction()
                 }
                 else
                 {
-                    // All iterations done — pop the frame and continue
                     ExecutionStack.Pop();
                     InstructionPointer++;
 
@@ -416,7 +427,6 @@ void ARobotCharacter::ExecuteCurrentInstruction()
         }
         else
         {
-            // Unmatched EndBlock (malformed program) — skip it and keep going
             UE_LOG(LogTemp, Warning,
                 TEXT("ARobotCharacter: Unmatched EndBlock at IP=%d — skipping."),
                 InstructionPointer);
@@ -427,38 +437,170 @@ void ARobotCharacter::ExecuteCurrentInstruction()
         return;
     }
 
+        case EInstructionType::SetSlot:
+    {
+        SetSlotValue(Instr.SlotIndex, Instr.SlotValue);
+        InstructionPointer++;
+        ExecuteCurrentInstruction();
+        return;
+    }
+    
+    case EInstructionType::IncrementSlot:
+    {
+        // slot[N] += 1.  Useful for counting served tables, loop iterations, etc.
+        const int32 NewValue = GetSlotValue(Instr.SlotIndex) + 1;
+        SetSlotValue(Instr.SlotIndex, NewValue);
+        InstructionPointer++;
+        ExecuteCurrentInstruction();
+        return;
+    }
+    
+    case EInstructionType::DecrementSlot:
+    {
+        // slot[N] -= 1.  Pair with IfSlotGreaterThan 0 to make a countdown loop.
+        const int32 NewValue = GetSlotValue(Instr.SlotIndex) - 1;
+        SetSlotValue(Instr.SlotIndex, NewValue);
+        InstructionPointer++;
+        ExecuteCurrentInstruction();
+        return;
+    }
+    
+    case EInstructionType::IfSlotEquals:
+    {
+        const int32  SlotVal  = GetSlotValue(Instr.SlotIndex);
+        const bool   bCondition = (SlotVal == Instr.SlotValue);
+    
+        UE_LOG(LogTemp, Log,
+            TEXT("ARobotCharacter: IfSlotEquals — Slot[%d]=%d == %d → %s"),
+            Instr.SlotIndex, SlotVal, Instr.SlotValue,
+            bCondition ? TEXT("TRUE") : TEXT("FALSE"));
+    
+        if (bCondition) InstructionPointer++;
+        else            InstructionPointer = FindMatchingEndBlock(InstructionPointer) + 1;
+    
+        ExecuteCurrentInstruction();
+        return;
+    }
+    
+    case EInstructionType::IfSlotGreaterThan:
+    {
+        const int32 SlotVal    = GetSlotValue(Instr.SlotIndex);
+        const bool  bCondition = (SlotVal > Instr.SlotValue);
+    
+        UE_LOG(LogTemp, Log,
+            TEXT("ARobotCharacter: IfSlotGreaterThan — Slot[%d]=%d > %d → %s"),
+            Instr.SlotIndex, SlotVal, Instr.SlotValue,
+            bCondition ? TEXT("TRUE") : TEXT("FALSE"));
+    
+        if (bCondition) InstructionPointer++;
+        else            InstructionPointer = FindMatchingEndBlock(InstructionPointer) + 1;
+    
+        ExecuteCurrentInstruction();
+        return;
+    }
+    
+    case EInstructionType::IfSlotLessThan:
+    {
+        const int32 SlotVal    = GetSlotValue(Instr.SlotIndex);
+        const bool  bCondition = (SlotVal < Instr.SlotValue);
+    
+        UE_LOG(LogTemp, Log,
+            TEXT("ARobotCharacter: IfSlotLessThan — Slot[%d]=%d < %d → %s"),
+            Instr.SlotIndex, SlotVal, Instr.SlotValue,
+            bCondition ? TEXT("TRUE") : TEXT("FALSE"));
+    
+        if (bCondition) InstructionPointer++;
+        else            InstructionPointer = FindMatchingEndBlock(InstructionPointer) + 1;
+    
+        ExecuteCurrentInstruction();
+        return;
+    }
+        
+    case EInstructionType::IfKitchenHasOrder:
+    {
+        bool bCondition = false;
+    
+        if (TableManager)
+        {
+            if (AKitchenCounter* Counter = TableManager->GetKitchenCounter())
+            {
+                bCondition = Counter->GetAvailableItems().Num() > 0;
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning,
+                TEXT("ARobotCharacter: IfKitchenHasOrder — no TableManager, condition is FALSE."));
+        }
+    
+        UE_LOG(LogTemp, Log,
+            TEXT("ARobotCharacter: IfKitchenHasOrder → %s"),
+            bCondition ? TEXT("TRUE") : TEXT("FALSE"));
+    
+        if (bCondition) InstructionPointer++;
+        else            InstructionPointer = FindMatchingEndBlock(InstructionPointer) + 1;
+    
+        ExecuteCurrentInstruction();
+        return;
+    }
+    
+    case EInstructionType::IfTableWaitingTooLong:
+    {
+        bool bCondition = false;
+        const int32 ResolvedTable = ResolveTableNumber(Instr);
+    
+        if (TableManager)
+        {
+            if (ATableActor* Table = TableManager->FindTableByNumber(ResolvedTable))
+            {
+                // Only meaningful if there's actually a pending order
+                if (Table->HasPendingOrder())
+                {
+                    bCondition = Table->CurrentOrder.TimeWaiting
+                                 >= static_cast<float>(Instr.SlotValue);
+                }
+            }
+        }
+    
+        UE_LOG(LogTemp, Log,
+            TEXT("ARobotCharacter: IfTableWaitingTooLong(Table %d, threshold %ds) → %s"),
+            ResolvedTable, Instr.SlotValue, bCondition ? TEXT("TRUE") : TEXT("FALSE"));
+    
+        if (bCondition) InstructionPointer++;
+        else            InstructionPointer = FindMatchingEndBlock(InstructionPointer) + 1;
+    
+        ExecuteCurrentInstruction();
+        return;
+        }
+        
     default:
-        break; // Fall through to action command dispatch below
+        break;
     }
 
 
-    URobotCommand* Command = CreateCommandFromInstruction(Instr);
+    const FRobotInstruction ResolvedInstr = ResolveInstruction(Instr);
+    URobotCommand* Command = CreateCommandFromInstruction(ResolvedInstr);
 
     if (!Command)
     {
-        // CreateCommandFromInstruction returns nullptr for unknown types
         UE_LOG(LogTemp, Error,
             TEXT("ARobotCharacter: No command handler for InstructionType=%d at IP=%d. "
                  "Skipping."),
             static_cast<int32>(Instr.InstructionType), InstructionPointer);
 
-        // Skip unknown instruction rather than halting entirely, to be robust
         InstructionPointer++;
         ExecuteCurrentInstruction();
         return;
     }
 
-    // Pre-flight validation
     if (!Command->CanExecute())
     {
         OnCommandError(Command->GetErrorMessage());
         return;
     }
 
-    // Store reference so PauseProgram / StopProgram can cancel it
     CurrentCommand = Command;
 
-    // Bind delegate callbacks
     Command->OnComplete.BindUObject(this, &ARobotCharacter::OnCommandComplete);
     Command->OnError.BindUObject(this, &ARobotCharacter::OnCommandError);
 
@@ -477,9 +619,35 @@ void ARobotCharacter::ExecuteCurrentInstruction()
 
 void ARobotCharacter::OnCommandComplete()
 {
+    if (CurrentProgram.IsValidIndex(InstructionPointer))
+    {
+        const FRobotInstruction& CompletedInstr = CurrentProgram[InstructionPointer];
+
+        if (CompletedInstr.bSaveToSlot)
+        {
+            switch (CompletedInstr.InstructionType)
+            {
+            case EInstructionType::TakeOrder:
+                SetSlotValue(CompletedInstr.SaveToSlotIndex, CurrentOrder.TableNumber);
+                break;
+
+            case EInstructionType::MoveToTable:
+                SetSlotValue(CompletedInstr.SaveToSlotIndex,
+                    ResolveTableNumber(CompletedInstr));
+                break;
+
+            default:
+                UE_LOG(LogTemp, Warning,
+                    TEXT("ARobotCharacter: bSaveToSlot set on instruction type %d "
+                         "which has no save handler — ignored."),
+                    static_cast<int32>(CompletedInstr.InstructionType));
+                break;
+            }
+        }
+    }
+    
     CurrentCommand = nullptr;
 
-    // Advance past the completed action instruction
     InstructionPointer++;
 
     UE_LOG(LogTemp, Log,
@@ -515,11 +683,17 @@ int32 ARobotCharacter::FindMatchingEndBlock(int32 StartIndex) const
         const EInstructionType Type = CurrentProgram[i].InstructionType;
 
         const bool bOpener =
-            Type == EInstructionType::IfTableHasOrder   ||
-            Type == EInstructionType::IfCarryingDish    ||
-            Type == EInstructionType::IfNotCarryingDish ||
-            Type == EInstructionType::RepeatLoop        ||
-            Type == EInstructionType::LoopForever;
+            Type == EInstructionType::IfTableHasOrder           ||
+            Type == EInstructionType::IfCarryingDish            ||
+            Type == EInstructionType::IfNotCarryingDish         ||
+            Type == EInstructionType::RepeatLoop                ||
+            Type == EInstructionType::LoopForever               ||
+                
+            Type == EInstructionType::IfSlotEquals              ||
+            Type == EInstructionType::IfSlotGreaterThan         ||
+            Type == EInstructionType::IfSlotLessThan            ||
+            Type == EInstructionType::IfKitchenHasOrder         ||
+            Type == EInstructionType::IfTableWaitingTooLong;
 
         if (bOpener)
         {
@@ -595,14 +769,21 @@ URobotCommand* ARobotCharacter::CreateCommandFromInstruction(
         return Cmd;
     }
 
-    // Control-flow instructions are NOT converted to commands —
-    // they are handled directly in ExecuteCurrentInstruction().
     case EInstructionType::IfTableHasOrder:
     case EInstructionType::IfCarryingDish:
     case EInstructionType::IfNotCarryingDish:
     case EInstructionType::RepeatLoop:
     case EInstructionType::LoopForever:
     case EInstructionType::EndBlock:
+        
+    case EInstructionType::SetSlot:
+    case EInstructionType::IncrementSlot:
+    case EInstructionType::DecrementSlot:
+    case EInstructionType::IfSlotEquals:
+    case EInstructionType::IfSlotGreaterThan:
+    case EInstructionType::IfSlotLessThan:
+    case EInstructionType::IfKitchenHasOrder:
+    case EInstructionType::IfTableWaitingTooLong:
         return nullptr;
 
     default:
@@ -687,4 +868,112 @@ void ARobotCharacter::OnMovementComplete()
     // This method is kept so ARobotAIController::OnMoveCompleted still compiles
     // when it calls Robot->OnMovementComplete().
     UE_LOG(LogTemp, Verbose, TEXT("ARobotCharacter: OnMovementComplete (legacy callback)"));
+}
+
+int32 ARobotCharacter::GetSlotValue(int32 SlotIndex) const
+{
+    if (!MemorySlots.IsValidIndex(SlotIndex))
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("ARobotCharacter::GetSlotValue — index %d is out of range (max %d). Returning 0."),
+            SlotIndex, MemorySlots.Num() - 1);
+        return 0;
+    }
+
+    const FRobotMemorySlot& Slot = MemorySlots[SlotIndex];
+
+    if (!Slot.bIsSet)
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("ARobotCharacter::GetSlotValue — Slot[%d] ('%s') has never been written. Returning 0."),
+            SlotIndex, *Slot.SlotName.ToString());
+    }
+
+    return Slot.IntValue;
+}
+
+void ARobotCharacter::SetSlotValue(int32 SlotIndex, int32 Value)
+{
+    if (!MemorySlots.IsValidIndex(SlotIndex))
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("ARobotCharacter::SetSlotValue — index %d is out of range."), SlotIndex);
+        return;
+    }
+
+    MemorySlots[SlotIndex].IntValue = Value;
+    MemorySlots[SlotIndex].bIsSet   = true;
+
+    UE_LOG(LogTemp, Log,
+        TEXT("ARobotCharacter: Slot[%d] ('%s') ← %d"),
+        SlotIndex, *MemorySlots[SlotIndex].SlotName.ToString(), Value);
+
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan,
+            FString::Printf(TEXT("Slot %s = %d"),
+                *MemorySlots[SlotIndex].SlotName.ToString(), Value));
+    }
+}
+
+void ARobotCharacter::ClearSlot(int32 SlotIndex)
+{
+    if (MemorySlots.IsValidIndex(SlotIndex))
+    {
+        MemorySlots[SlotIndex].IntValue = 0;
+        MemorySlots[SlotIndex].bIsSet   = false;
+    }
+}
+
+void ARobotCharacter::ClearAllSlots()
+{
+    for (FRobotMemorySlot& Slot : MemorySlots)
+    {
+        Slot.IntValue = 0;
+        Slot.bIsSet   = false;
+    }
+    UE_LOG(LogTemp, Log, TEXT("ARobotCharacter: All memory slots cleared."));
+}
+
+int32 ARobotCharacter::ResolveTableNumber(const FRobotInstruction& Instr) const
+{
+    if (!Instr.bReadTableFromSlot)
+    {
+        return Instr.TargetTableNumber;
+    }
+
+    if (!MemorySlots.IsValidIndex(Instr.ReadFromSlotIndex))
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("ARobotCharacter::ResolveTableNumber — slot index %d out of range. "
+                 "Falling back to literal %d."),
+            Instr.ReadFromSlotIndex, Instr.TargetTableNumber);
+        return Instr.TargetTableNumber;
+    }
+
+    const FRobotMemorySlot& Slot = MemorySlots[Instr.ReadFromSlotIndex];
+
+    if (!Slot.bIsSet)
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("ARobotCharacter::ResolveTableNumber — Slot[%d] ('%s') unset. "
+                 "Returning 0."),
+            Instr.ReadFromSlotIndex, *Slot.SlotName.ToString());
+    }
+
+    return Slot.IntValue;
+}
+
+FRobotInstruction ARobotCharacter::ResolveInstruction(const FRobotInstruction& Instr) const
+{
+    // Make a mutable copy so the caller always gets plain literals.
+    FRobotInstruction Resolved = Instr;
+
+    if (Instr.bReadTableFromSlot)
+    {
+        Resolved.TargetTableNumber  = ResolveTableNumber(Instr);
+        Resolved.bReadTableFromSlot = false; // Already baked in — no double-resolve
+    }
+
+    return Resolved;
 }

@@ -80,6 +80,16 @@ void ATableActor::BeginPlay()
 	}
 }
 
+void ATableActor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (HasPendingOrder())
+	{
+		CurrentOrder.TimeWaiting += DeltaTime;
+	}
+}
+
 /**
  *IOrderable INTERFACE IMPLEMENTATION
  */

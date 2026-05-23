@@ -76,6 +76,18 @@ struct FBlockData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHasLoopCountParameter = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanSaveToSlot = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanReadTableFromSlot = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasSlotIndexParameter = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasSlotValueParameter = false;
 };
 
 USTRUCT(BlueprintType)
@@ -94,4 +106,37 @@ struct FRobotInstruction
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 LoopCount = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bSaveToSlot = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 SaveToSlotIndex = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bReadTableFromSlot = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ReadFromSlotIndex = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 SlotIndex = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 SlotValue = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FRobotMemorySlot
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName SlotName = NAME_None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	int32 IntValue = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsSet = false;
 };

@@ -10,6 +10,11 @@ ATableManager::ATableManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	if (KitchenCounter)
+	{
+		KitchenLocation = KitchenCounter->GetActorLocation() + FVector(100, 0, 0);
+	}
 }
 
 void ATableManager::RegisterTable(ATableActor* Table)

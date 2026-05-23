@@ -31,6 +31,48 @@ FRobotInstruction UBlockWidget::GetInstruction()
 		const FString WaitText = WaitValueInput->GetText().ToString();
 		Instruction.WaitValue = FCString::Atof(*WaitText);
 	}
+	if (SaveToSlotInput && SaveToSlotInput->GetVisibility() == ESlateVisibility::Visible)
+	{
+		const FString Text  = SaveToSlotInput->GetText().ToString().TrimStartAndEnd();
+		const int32   Index = FCString::Atoi(*Text);
+
+		if (!Text.IsEmpty() && Index >= 0 && Index <= 3)
+		{
+			Instruction.bSaveToSlot      = true;
+			Instruction.SaveToSlotIndex  = Index;
+		}
+		else
+		{
+			Instruction.bSaveToSlot = false;
+		}
+	}
+
+	if (ReadFromSlotInput && ReadFromSlotInput->GetVisibility() == ESlateVisibility::Visible)
+	{
+		const FString Text  = ReadFromSlotInput->GetText().ToString().TrimStartAndEnd();
+		const int32   Index = FCString::Atoi(*Text);
+
+		if (!Text.IsEmpty() && Index >= 0 && Index <= 3)
+		{
+			Instruction.bReadTableFromSlot = true;
+			Instruction.ReadFromSlotIndex  = Index;
+		}
+		else
+		{
+			Instruction.bReadTableFromSlot = false;
+		}
+	}
+
+	if (SlotIndexInput && SlotIndexInput->GetVisibility() == ESlateVisibility::Visible)
+	{
+		Instruction.SlotIndex = FMath::Clamp(
+			FCString::Atoi(*SlotIndexInput->GetText().ToString()), 0, 3);
+	}
+
+	if (SlotValueInput && SlotValueInput->GetVisibility() == ESlateVisibility::Visible)
+	{
+		Instruction.SlotValue = FCString::Atoi(*SlotValueInput->GetText().ToString());
+	}
 
 	return Instruction;
 }
@@ -66,6 +108,48 @@ void UBlockWidget::UpdateVisuals()
 				? ESlateVisibility::Visible
 				: ESlateVisibility::Collapsed);
 	}
+	
+	if (SaveToSlotInput)
+	{
+		SaveToSlotInput->SetVisibility(
+			BlockData.bCanSaveToSlot
+				? ESlateVisibility::Visible
+				: ESlateVisibility::Collapsed);
+	}
+
+	if (ReadFromSlotInput)
+	{
+		ReadFromSlotInput->SetVisibility(
+			BlockData.bCanReadTableFromSlot
+				? ESlateVisibility::Visible
+				: ESlateVisibility::Collapsed);
+	}
+
+	if (SlotIndexInput)
+	{
+		SlotIndexInput->SetVisibility(
+			BlockData.bHasSlotIndexParameter
+				? ESlateVisibility::Visible
+				: ESlateVisibility::Collapsed);
+
+		if (BlockData.bHasSlotIndexParameter)
+		{
+			SlotIndexInput->SetText(FText::FromString(TEXT("0")));
+		}
+	}
+
+	if (SlotValueInput)
+	{
+		SlotValueInput->SetVisibility(
+			BlockData.bHasSlotValueParameter
+				? ESlateVisibility::Visible
+				: ESlateVisibility::Collapsed);
+
+		if (BlockData.bHasSlotValueParameter)
+		{
+			SlotValueInput->SetText(FText::FromString(TEXT("0")));
+		}
+	}
 }
 
 void UBlockWidget::RequestRemove()
@@ -79,7 +163,6 @@ void UBlockWidget::RequestRemove()
 			*BlockData.DisplayName.ToString());
 	}
 }
-
 
 FReply UBlockWidget::NativeOnMouseButtonDown(
 	const FGeometry& InGeometry,

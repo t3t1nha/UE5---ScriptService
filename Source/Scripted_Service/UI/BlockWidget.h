@@ -49,6 +49,49 @@ public:
 	UTextBlock* BlockNameText;
 
 	/**
+ * Optional slot-save input.  Shown only when BlockData.bCanSaveToSlot is true.
+ *
+ * The player types a slot index (0–3, displayed as A–D in the OS panel).
+ * After the instruction executes successfully, ARobotCharacter writes a
+ * context-appropriate value into that slot (e.g. TakeOrder saves the table number).
+ *
+ * Leave empty to skip saving.
+ */
+	UPROPERTY(meta = (BindWidgetOptional), BlueprintReadWrite)
+	UEditableTextBox* SaveToSlotInput;
+
+	/**
+	 * Optional table-from-slot input.  Shown only when BlockData.bCanReadTableFromSlot is true.
+	 *
+	 * The player types a slot index (0–3).  At execution time the interpreter reads
+	 * the slot's current integer value and uses it as the table number instead of
+	 * the literal in TableNumberInput.
+	 *
+	 * Leave empty to use the literal TableNumberInput value.
+	 */
+	UPROPERTY(meta = (BindWidgetOptional), BlueprintReadWrite)
+	UEditableTextBox* ReadFromSlotInput;
+
+	/**
+	 * Slot index for slot-specific instructions (SetSlot, IncrementSlot, DecrementSlot,
+	 * IfSlotEquals, IfSlotGreaterThan, IfSlotLessThan).
+	 * Shown only when BlockData.bHasSlotIndexParameter is true.
+	 * Player enters 0–3 (A–D).
+	 */
+	UPROPERTY(meta = (BindWidgetOptional), BlueprintReadWrite)
+	UEditableTextBox* SlotIndexInput;
+
+	/**
+	 * Literal value for SetSlot or comparison instructions.
+	 * For SetSlot:              the integer to write into the slot.
+	 * For IfSlotEquals etc.:   the integer to compare against.
+	 * For IfTableWaitingTooLong: the wait threshold in whole seconds.
+	 * Shown only when BlockData.bHasSlotValueParameter is true.
+	 */
+	UPROPERTY(meta = (BindWidgetOptional), BlueprintReadWrite)
+	UEditableTextBox* SlotValueInput;
+
+	/**
 	 * The coloured background border
 	 */
 	UPROPERTY(meta = (BindWidget))

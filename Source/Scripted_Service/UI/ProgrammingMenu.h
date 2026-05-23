@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/WrapBox.h"
+#include "Components/ScrollBox.h"
+#include "Components/ScrollBoxSlot.h"
 #include "Components/TextBlock.h"
 #include "ProgramSequenceWidget.h"
 #include "BlockWidget.h"
@@ -31,7 +32,7 @@ public:
 	 * Populated at construction by PopulatePalette() using BlockLibrary defaults.
 	 */
 	UPROPERTY(meta = (BindWidget))
-	UWrapBox* PaletteBox;
+	UScrollBox* PaletteBox;
 
 	/**
 	 * Optional text block used to display status messages such as
