@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseIngredient.h"
+#include "InteractInterface.h"
 #include "StructTypes.h"
 #include "IOrderable.h"
 #include "Components/WidgetComponent.h"

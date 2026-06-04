@@ -19,6 +19,9 @@ struct FRecipeData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe Data")
 	UTexture2D* RecipeIcon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe Data")
+	float BuyPrice = 100.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe Data")
 	EApparatusType RequiredApparatus = EApparatusType::Stove;

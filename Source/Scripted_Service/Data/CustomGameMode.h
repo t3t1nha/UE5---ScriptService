@@ -29,38 +29,21 @@ public:
 
     ACustomGameMode();
 
-    // ── Tuning knobs (editable in Blueprint defaults / Details panel) ─────────
-
-    /**
-     * Points awarded for each correctly delivered order.
-     * Shown to the player as the "score" counter.
-     */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Scoring",
         meta = (ClampMin = "0"))
     int32 PointsPerCorrectDelivery = 100;
 
-    /**
-     * Points deducted for each wrong dish delivered.
-     * Score is clamped to 0 — it will never go negative.
-     */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Scoring",
         meta = (ClampMin = "0"))
     int32 PenaltyPerWrongDelivery = 25;
-
-    /**
-     * Points deducted when an order expires before the robot takes it.
-     * Score is clamped to 0.
-     */
+    
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Scoring",
         meta = (ClampMin = "0"))
-    int32 PenaltyPerExpiredOrder = 50;
+    int32 PenaltyPerExpiredOrder = 25;
 
-    /**
-     * Tip amount (in dollars) added for a correct delivery.
-     */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Scoring",
         meta = (ClampMin = "0.0"))
-    float TipPerCorrectDelivery = 5.0f;
+    float TipPerCorrectDelivery = 100.0f;
 
     /** Accumulated points for this session. Never goes below 0. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
@@ -68,17 +51,14 @@ public:
 
     /** Total tips earned for this session (in dollars). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-    float TotalTips = 0.0f;
-
-    /** How many orders were delivered with the correct dish. */
+    float TotalTips = 500.0f;
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 OrdersCorrect = 0;
 
-    /** How many orders were delivered with the wrong dish. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 OrdersWrong = 0;
 
-    /** How many orders timed-out before the robot reached the table. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 OrdersExpired = 0;
 
@@ -106,6 +86,14 @@ public:
      */
     UFUNCTION(BlueprintPure, Category = "Stats|Debug")
     FString GetStatsDebugString() const;
+
+    /**
+ * Attempts to spend the given amount from TotalTips.
+ * @param Amount - Amount to spend
+ * @return true if player had enough money and it was spent, false otherwise
+ */
+    UFUNCTION(BlueprintCallable, Category = "Stats")
+    bool SpendMoney(float Amount);
 
 protected:
 

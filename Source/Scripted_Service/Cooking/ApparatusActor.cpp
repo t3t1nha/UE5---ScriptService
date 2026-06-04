@@ -49,13 +49,25 @@ void AApparatusActor::CheckForRecipe()
 	}
     TArray<FName> RowNames = RecipeDataTable->GetRowNames();
 
-    for (const FName& RowName : RowNames)
+	for (const FName& RowName : RowNames)
+	{
+		if (FRecipeData* Recipe = RecipeDataTable->FindRow<FRecipeData>(RowName, TEXT("")))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Row '%s': bIsUnlocked=%d, Apparatus=%d, Ingredients=%d"),
+				*RowName.ToString(),
+				Recipe->bIsUnlocked,
+				(int32)Recipe->RequiredApparatus,
+				Recipe->RequiredIngredients.Num());
+		}
+	}
+	
+	for (const FName& RowName : RowNames)
     {
         if (FRecipeData* Recipe = RecipeDataTable->FindRow<FRecipeData>(RowName, TEXT("Looking up Recipe Data")))
         {
-        	if (!Recipe->bIsUnlocked)
+        	if (!IsRecipeUnlocked(RowName))
         	{
-        		return;
+        		continue;
         	}
         	
             if (Recipe->RequiredApparatus != ApparatusType)

@@ -30,6 +30,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable)
+	FName GetItemName() { return DisplayName; };
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
 	EIngredientType IngredientType;
 

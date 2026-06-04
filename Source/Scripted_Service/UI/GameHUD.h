@@ -19,18 +19,6 @@ public:
     UPROPERTY(meta = (BindWidgetOptional))
     UTextBlock* TipsText;
 
-    /** Running count of correctly delivered orders. */
-    UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* OrdersCorrectText;
-
-    /** Running count of orders delivered with the wrong dish. */
-    UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* OrdersWrongText;
-
-    /** Running count of orders that timed out before delivery. */
-    UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* OrdersExpiredText;
-
     UFUNCTION(BlueprintImplementableEvent)
     void OnGrabItem(bool isHolding);
 

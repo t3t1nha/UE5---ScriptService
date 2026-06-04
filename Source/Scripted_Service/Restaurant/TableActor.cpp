@@ -62,22 +62,21 @@ void ATableActor::BeginPlay()
 		return;
 	}
 
-	if (bGenerateOrderOnBeginPlay)
-	{
-		float InitialDelay = FMath::FRandRange(0.5f, 3.0f);
-		GetWorldTimerManager().SetTimer(
-			OrderGenerationTimerHandle,
-			this,
-			&ATableActor::GenerateRandomOrder,
-			InitialDelay,
-			false
-		);
-	}
-	else
-	{
-		// Just wait for the normal interval before the first order.
+	// if (bGenerateOrderOnBeginPlay)
+	// {
+	// 	float InitialDelay = FMath::FRandRange(0.5f, 3.0f);
+	// 	GetWorldTimerManager().SetTimer(
+	// 		OrderGenerationTimerHandle,
+	// 		this,
+	// 		&ATableActor::GenerateRandomOrder,
+	// 		InitialDelay,
+	// 		false
+	// 	);
+	// }
+	// else
+	// {
 		ScheduleNextOrder();
-	}
+	// }
 }
 
 void ATableActor::Tick(float DeltaTime)
@@ -90,9 +89,6 @@ void ATableActor::Tick(float DeltaTime)
 	}
 }
 
-/**
- *IOrderable INTERFACE IMPLEMENTATION
- */
 bool ATableActor::HasPendingOrder() const
 {
 	return CurrentOrder.OrderState == EOrderState::Waiting
@@ -129,13 +125,10 @@ void ATableActor::PlaceOrder(TSubclassOf<ABaseIngredient> Dish)
 
 	ShowOrderIndicator();
 	
-	// Broadcast so Blueprint / HUD can react
 	OnOrderPlaced.Broadcast(TableNumber, CurrentOrder);
 
-	// Start the timeout countdown (if enabled).
 	if (OrderTimeoutDuration > 0.0f)
 	{
-		// Clear any existing timeout before setting a fresh one.
 		ClearTimeoutTimer();
 
 		GetWorldTimerManager().SetTimer(
@@ -150,7 +143,6 @@ void ATableActor::PlaceOrder(TSubclassOf<ABaseIngredient> Dish)
 
 bool ATableActor::DeliverOrder(TSubclassOf<ABaseIngredient> Dish)
 {
-	// Stop the timeout — the robot arrived in time
 	ClearTimeoutTimer();
 
 	if (Dish == CurrentOrder.RequestedDish)
@@ -170,10 +162,8 @@ bool ATableActor::DeliverOrder(TSubclassOf<ABaseIngredient> Dish)
 			);
 		}
 
-		// Notify listeners
 		OnOrderDelivered.Broadcast(TableNumber, true);
 
-		// Schedule the next order after the success
 		ScheduleNextOrder();
 		return true;
 	}
@@ -232,7 +222,6 @@ void ATableActor::GenerateRandomOrder()
 		return;
 	}
 
-	// Guard: don't overwrite an in-progress order.
 	if (CurrentOrder.RequestedDish != nullptr
 		&& CurrentOrder.OrderState != EOrderState::Delivered)
 	{
@@ -242,25 +231,21 @@ void ATableActor::GenerateRandomOrder()
 		return;
 	}
 
-	// Pick a uniformly random dish from the pool.
-	const int32 RandomIndex = FMath::RandRange(0, PossibleDishes.Num() - 1);
+	int32 RandomIndex = FMath::RandRange(0, PossibleDishes.Num() - 1);
 	TSubclassOf<ABaseIngredient> ChosenDish = PossibleDishes[RandomIndex];
 
 	UE_LOG(LogTemp, Log,
 		TEXT("Table %d: Randomly selected dish '%s' (index %d / %d)."),
 		TableNumber, *ChosenDish->GetName(), RandomIndex, PossibleDishes.Num() - 1);
 
-	// Delegate to PlaceOrder which handles state, feedback, and timeout.
 	PlaceOrder(ChosenDish);
 }
 
 void ATableActor::CancelCurrentOrder()
 {
-	// Stop any running timers.
 	GetWorldTimerManager().ClearTimer(OrderGenerationTimerHandle);
 	ClearTimeoutTimer();
 
-	// Reset order state.
 	CurrentOrder.RequestedDish = nullptr;
 	CurrentOrder.OrderState    = EOrderState::Waiting;
 	CurrentOrder.TimeWaiting   = 0.0f;
@@ -275,7 +260,6 @@ void ATableActor::ScheduleNextOrder()
 		return;
 	}
 
-	// Clamp so MaxOrderInterval is always >= MinOrderInterval.
 	const float ClampedMax = FMath::Max(MaxOrderInterval, MinOrderInterval);
 	const float Delay      = FMath::FRandRange(MinOrderInterval, ClampedMax);
 

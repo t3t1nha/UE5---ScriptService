@@ -113,6 +113,19 @@ FString ACustomGameMode::GetStatsDebugString() const
         Score, TotalTips, OrdersCorrect, OrdersWrong, OrdersExpired);
 }
 
+bool ACustomGameMode::SpendMoney(float Amount)
+{
+    if (TotalTips < Amount)
+    {
+        return false;
+    }
+
+    TotalTips -= Amount;
+    BroadcastStats();
+
+    return true;
+}
+
 
 void ACustomGameMode::BroadcastStats()
 {

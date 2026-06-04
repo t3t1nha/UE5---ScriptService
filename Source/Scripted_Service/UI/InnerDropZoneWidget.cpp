@@ -38,16 +38,16 @@ bool UInnerDropZoneWidget::NativeOnDrop(
 
     // Reject container blocks — inner zones only accept flat action blocks.
     // This keeps the nesting depth at exactly one level.
-    if (DraggedBlock->BlockData.bIsContainerBlock)
-    {
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(
-                -1, 2.0f, FColor::Orange,
-                TEXT("Cannot nest If/Loop blocks inside another block"));
-        }
-        return false;
-    }
+    // if (DraggedBlock->BlockData.bIsContainerBlock)
+    // {
+    //     if (GEngine)
+    //     {
+    //         GEngine->AddOnScreenDebugMessage(
+    //             -1, 2.0f, FColor::Orange,
+    //             TEXT("Cannot nest If/Loop blocks inside another block"));
+    //     }
+    //     return false;
+    // }
 
     UBlockWidget* NewBlock = CreateAndAddInnerBlock(DraggedBlock->BlockData);
     if (!NewBlock) return false;

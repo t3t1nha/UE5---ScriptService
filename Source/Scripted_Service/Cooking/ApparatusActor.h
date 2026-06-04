@@ -40,6 +40,9 @@ public:
 	void SnapIngredient(ABaseIngredient* ToSnapIngredient);
 
 	UFUNCTION(BlueprintImplementableEvent)
+	bool IsRecipeUnlocked(FName RecipeName) const;
+	
+	UFUNCTION(BlueprintImplementableEvent)
 	void OnStartCooking();
 
 	UFUNCTION(BlueprintImplementableEvent)

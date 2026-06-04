@@ -77,22 +77,4 @@ void UGameHUD::RefreshStats(int32 Score, float TotalTips,
     }
 
     Tips = TotalTips;
-
-    if (OrdersCorrectText)
-    {
-        OrdersCorrectText->SetText(
-            FText::FromString(FString::Printf(TEXT("Correct: %d"), OrdersCorrect)));
-    }
-
-    if (OrdersWrongText)
-    {
-        OrdersWrongText->SetText(
-            FText::FromString(FString::Printf(TEXT("Wrong: %d"), OrdersWrong)));
-    }
-
-    if (OrdersExpiredText)
-    {
-        OrdersExpiredText->SetText(
-            FText::FromString(FString::Printf(TEXT("Expired: %d"), OrdersExpired)));
-    }
 }
