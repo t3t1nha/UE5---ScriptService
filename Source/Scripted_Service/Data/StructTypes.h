@@ -13,6 +13,12 @@ USTRUCT(BlueprintType)
 struct FRecipeData : public FTableRowBase
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe Data")
+	bool bIsUnlocked = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe Data")
+	UTexture2D* RecipeIcon;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe Data")
 	EApparatusType RequiredApparatus = EApparatusType::Stove;

@@ -25,38 +25,12 @@ void AApparatusActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (DropZoneComponent)
-	{
-		DropZoneComponent->OnComponentEndOverlap.AddDynamic(this, &AApparatusActor::OnDropZoneOverlapEnd);
-	}
 }
 
 void AApparatusActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	// Only bother rotating if the widget is visible
-	// if (!CookingProgressComponent || 
-	// 	!CookingProgressComponent->IsVisible())
-	// {
-	// 	return;
-	// }
-	// 
-	// // Get the player camera location
-	// APlayerCameraManager* CameraManager = 
-	// 	UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
-    //     
-	// if (!CameraManager) return;
-	// 
-	// FVector CameraLocation = CameraManager->GetCameraLocation();
-	// FVector WidgetLocation = CookingProgressComponent->GetComponentLocation();
-	// 
-	// FVector DirectionToCamera = CameraLocation - WidgetLocation;
-	// FRotator LookAtRotation = DirectionToCamera.Rotation();
-	// 
-	// // Only rotate on Yaw and Pitch - ignore Roll
-	// LookAtRotation.Roll = 0.0f;
-	// 
-	// CookingProgressComponent->SetWorldRotation(LookAtRotation);
+
 }
 
 void AApparatusActor::Interact_Implementation()
@@ -79,21 +53,23 @@ void AApparatusActor::CheckForRecipe()
     {
         if (FRecipeData* Recipe = RecipeDataTable->FindRow<FRecipeData>(RowName, TEXT("Looking up Recipe Data")))
         {
-            // Skip not intended recipes for this Apparatus
+        	if (!Recipe->bIsUnlocked)
+        	{
+        		return;
+        	}
+        	
             if (Recipe->RequiredApparatus != ApparatusType)
             {
                 continue;
             }
 
-            // Skip if the number of required ingredients doesn't match the current number
             if (Recipe->RequiredIngredients.Num() != CurrentIngredients.Num())
             {
                 continue;
             }
-
+        	
             bool bIsMatch = true;
 
-            // Check if all required ingredients are present with correct quantities
             for (const auto& RequiredElem : Recipe->RequiredIngredients)
             {
                 const TSubclassOf<ABaseIngredient> RequiredIngredient = RequiredElem.Key;
@@ -112,7 +88,6 @@ void AApparatusActor::CheckForRecipe()
                 }
             }
 
-            // Check if the CurrentIngredients map contains any extra items
             if (bIsMatch)
             {
                 for (const auto& CurrentElem : CurrentIngredients)
@@ -128,7 +103,7 @@ void AApparatusActor::CheckForRecipe()
             if (bIsMatch)
             {
                 CurrentRecipeData = *Recipe;
-                break; // Exit loop if recipe was found
+                break;
             }
         }
     }
@@ -242,7 +217,6 @@ void AApparatusActor::SnapIngredient(ABaseIngredient* ToSnapIngredient)
 
 	const FVector& DropZoneLocation = DropZoneComponent->GetComponentLocation();
 	ToSnapIngredient->SetActorLocation(DropZoneLocation);
-	ToSnapIngredient->SetActorRotation(FRotator(0.0f, 0.0f, 0.0f));
 	
 	AddIngredient(ToSnapIngredient);
 	
@@ -267,14 +241,14 @@ void AApparatusActor::FinishCooking()
 	
 	if (CurrentRecipeData.OutputItemSubclass != nullptr)
 	{
-		FVector SpawnLocation, Offset = FVector(0.0f, 0.0f, 20.0f);
+		FVector SpawnLocation;
 		
 		if (CurrentIngredientActors.Num() == 1)
 		{
-			SpawnLocation = CurrentIngredientActors[0]->GetActorLocation() + Offset;
+			SpawnLocation = CurrentIngredientActors[0]->GetActorLocation();
 		} else
 		{
-			SpawnLocation = DropZoneComponent->GetComponentLocation() + Offset;
+			SpawnLocation = DropZoneComponent->GetComponentLocation();
 		}
 		
 		GetWorld()->SpawnActor<ABaseIngredient>(CurrentRecipeData.OutputItemSubclass,SpawnLocation, FRotator::ZeroRotator);
@@ -313,39 +287,4 @@ float AApparatusActor::GetCookingProgress() const
 	}
 	
 	return FMath::Clamp(Elapsed / Total, 0.0f, 1.0f);
-}
-
-void AApparatusActor::OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                             UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor)
-	{
-		ABaseIngredient* IngredientActor = Cast<ABaseIngredient>(OtherActor);
-
-		if (IngredientActor)
-		{
-			AddIngredient(IngredientActor);
-		}
-	}
-	else
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Actor is not an ingredient"));
-		}
-	}
-}
-
-void AApparatusActor::OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if (OtherActor)
-	{
-		ABaseIngredient* IngredientActor = Cast<ABaseIngredient>(OtherActor);
-
-		if (IngredientActor)
-		{
-				RemoveIngredient(IngredientActor);
-		}
-	}
 }

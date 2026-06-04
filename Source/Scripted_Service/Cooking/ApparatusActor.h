@@ -106,18 +106,4 @@ protected:
 
 	UFUNCTION(BlueprintPure)
 	float GetCookingProgress() const;
-	
-	UFUNCTION()
-	virtual void OnDropZoneOverlapBegin(UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult);
-
-	UFUNCTION()
-	virtual void OnDropZoneOverlapEnd(UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex);
 };

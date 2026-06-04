@@ -70,16 +70,12 @@ void UProgrammingMenu::PopulatePalette()
 		{
 			PaletteBlock->InitializeBlock(BlockData);
 
-			// 2. Add to ScrollBox
-			// AddChild returns a UPanelSlot, which we cast to UScrollBoxSlot to access padding
 			class UScrollBoxSlot* PaletteSlot = Cast<UScrollBoxSlot>(PaletteBox->AddChild(PaletteBlock));
         
 			if (PaletteSlot)
 			{
-				// This applies space between your vertical blocks
 				PaletteSlot->SetPadding(FMargin(0.0f, 4.0f)); 
             
-				// 3. Force the block to stretch across the full width of the ScrollBox
 				PaletteSlot->SetHorizontalAlignment(HAlign_Fill);
 			}
 		}
@@ -88,7 +84,6 @@ void UProgrammingMenu::PopulatePalette()
 
 void UProgrammingMenu::RunProgram()
 {
-	// Validate sequence widget
 	if (!SequenceWidget)
 	{
 		UE_LOG(LogTemp, Error,
@@ -97,7 +92,6 @@ void UProgrammingMenu::RunProgram()
 		return;
 	}
 
-	// Guard against empty programs
 	if (SequenceWidget->GetBlockCount() == 0)
 	{
 		UE_LOG(LogTemp, Warning,
@@ -112,7 +106,6 @@ void UProgrammingMenu::RunProgram()
 		return;
 	}
 
-	// Resolve robot: use assigned reference, fall back to level search
 	if (!TargetRobot)
 	{
 		UE_LOG(LogTemp, Warning,
@@ -134,14 +127,12 @@ void UProgrammingMenu::RunProgram()
 		return;
 	}
 
-	// Build the instruction array from the sequence widget
 	TArray<FRobotInstruction> Program = SequenceWidget->GetProgram();
 
 	UE_LOG(LogTemp, Log,
 		TEXT("ProgrammingMenu: Sending %d instruction(s) to robot '%s'"),
 		Program.Num(), *TargetRobot->GetName());
 
-	// Load and execute
 	TargetRobot->LoadProgram(Program);
 	TargetRobot->ExecuteProgram();
 
@@ -161,7 +152,6 @@ void UProgrammingMenu::StopProgram()
 {
 	if (!TargetRobot)
 	{
-		// Try to find one; if the player presses Stop without using Run first
 		TargetRobot = FindRobotInLevel();
 	}
 
@@ -212,7 +202,6 @@ ARobotCharacter* UProgrammingMenu::FindRobotInLevel() const
 		return nullptr;
 	}
 
-	// Return the first robot found; the game currently has one robot per level
 	for (TActorIterator<ARobotCharacter> It(GetWorld()); It; ++It)
 	{
 		return *It;
@@ -233,8 +222,4 @@ void UProgrammingMenu::SetStatusMessage(const FString& Message, FLinearColor Col
 void UProgrammingMenu::OnSequenceModified()
 {
 	bProgramDirty = true;
- 
-	UE_LOG(LogTemp, Verbose,
-		TEXT("ProgrammingMenu: Sequence modified — program marked dirty. "
-			 "Robot will stay paused until Run is pressed."));
 }
