@@ -27,7 +27,7 @@ void AKitchenCounter::OnDishPlaced(UPrimitiveComponent* OverlappedComponent, AAc
     const FHitResult& SweepResult)
 {
     ABaseIngredient* Ingredient = Cast<ABaseIngredient>(OtherActor);
-    if (Ingredient && Ingredient->IngredientType == EIngredientType::CookedDish)
+    if (Ingredient)
     {
         TSubclassOf<ABaseIngredient> DishClass = Ingredient->GetClass();
         if (!AvailableDishes.Contains(DishClass))
@@ -38,9 +38,6 @@ void AKitchenCounter::OnDishPlaced(UPrimitiveComponent* OverlappedComponent, AAc
     }
 }
 
-/**
- * IPickupPoint INTERFACE IMPLEMENTATION
- */
 bool AKitchenCounter::HasItem(TSubclassOf<ABaseIngredient> ItemClass) const
 {
     return AvailableDishes.Contains(ItemClass);

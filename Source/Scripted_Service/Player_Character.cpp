@@ -3,6 +3,7 @@
 #include "Player_Character.h"
 #include "ApparatusActor.h"
 #include "IOrderable.h"
+#include "TableActor.h"
 
 // Sets default values
 APlayer_Character::APlayer_Character()
@@ -181,14 +182,14 @@ void APlayer_Character::Interact()
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, 
 		FString::Printf(TEXT("Hit: %s"), *HitActor->GetName()));
 
-		// Grabable Check
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, 
-			FString::Printf(TEXT("IsGrabable: %d"), HitActor->Implements<UGrabableInterface>()));
-
-		// Interactable Check
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, 
-			FString::Printf(TEXT("IsInteractable: %d"), HitActor->Implements<UInteractInterface>()));
-
+		if (Cast<ATableActor>(Hit.GetActor()))
+		{
+			ATableActor* TableActor = Cast<ATableActor>(Hit.GetActor());
+			TableActor->DeliverOrder(HeldItem->GetClass());
+			HeldItem->Destroy();
+			Drop();
+		}
+		
 		if (HeldItem != nullptr)
 		{
 			AApparatusActor* Apparatus = Cast<AApparatusActor>(HitActor);
@@ -197,8 +198,8 @@ void APlayer_Character::Interact()
 				Apparatus->SnapIngredient(HeldItem);
 				Drop();
 			}
-		}	
-
+		}
+		
 		const bool bIsGrabable = HitActor->Implements<UGrabableInterface>();
 
 		if (HitActor->Implements<UInteractInterface>())

@@ -10,16 +10,24 @@ void UOrderWidget::NativeConstruct()
     SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UOrderWidget::ShowOrder(int32 TableNumber, const FOrderData& Order)
+void UOrderWidget::ShowOrder(int32 TableNumber, FText TitleText, const FOrderData& Order)
 {
     if (TableLabel)
     {
-        TableLabel->SetText(
-            FText::Format(
-                FText::FromString(TEXT("Table #{0}")),
-                FText::AsNumber(TableNumber)
-            )
-        );
+        if (TableNumber != 0)
+        {
+            TableLabel->SetText(
+                FText::Format(
+                    FText::FromString(TEXT("Table {0}")),
+                    FText::AsNumber(TableNumber)
+                )
+            );
+        }
+        else
+        {
+            TableLabel->SetText(TitleText);
+        }
+        
     }
 
     if (DishLabel)

@@ -319,7 +319,8 @@ void ATableActor::ShowOrderIndicator()
  
 	if (OrderWidgetInstance)
 	{
-		OrderWidgetInstance->ShowOrder(TableNumber, CurrentOrder);
+		FText TitleText;
+		OrderWidgetInstance->ShowOrder(TableNumber, TitleText, CurrentOrder);
 	}
  
 	UE_LOG(LogTemp, Log,

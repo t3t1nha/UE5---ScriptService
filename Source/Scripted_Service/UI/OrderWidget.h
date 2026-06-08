@@ -40,12 +40,11 @@ public:
     /**
      * Populate the widget labels and make the widget visible.
      *
-     * @param TableNumber  The table number to display (e.g. 1, 2, 3 …).
-     * @param Order        The full order data — RequestedDish is used to derive
-     *                     the dish name displayed in DishLabel.
+     * @param TableNumber  The table number to display.
+     * @param Order        The full order data 
      */
     UFUNCTION(BlueprintCallable, Category = "Table|UI")
-    void ShowOrder(int32 TableNumber, const FOrderData& Order);
+    void ShowOrder(int32 TableNumber, FText TitleText, const FOrderData& Order);
 
     /**
      * Hide the widget and clear both text labels.
