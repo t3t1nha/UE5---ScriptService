@@ -40,7 +40,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 	FOnOrderDelivered,
 	int32, TableNumber,
-	bool, bCorrect
+	float, IngredientPrice
 );
 
 UCLASS()

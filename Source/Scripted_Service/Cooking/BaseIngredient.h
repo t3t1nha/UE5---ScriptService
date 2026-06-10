@@ -41,4 +41,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
 	FText Description;
+	
+	UPROPERTY(EditAnywhere, Category = "Stats")
+	float SellPrice = 5.0f;
 };

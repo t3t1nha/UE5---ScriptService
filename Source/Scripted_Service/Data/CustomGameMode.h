@@ -45,13 +45,12 @@ public:
         meta = (ClampMin = "0.0"))
     float TipPerCorrectDelivery = 100.0f;
 
-    /** Accumulated points for this session. Never goes below 0. */
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 Score = 0;
 
-    /** Total tips earned for this session (in dollars). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-    float TotalTips = 500.0f;
+    float TotalTips = 20.0f;
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 OrdersCorrect = 0;
@@ -62,19 +61,10 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 OrdersExpired = 0;
 
-    /**
-     * Fired every time any tracked stat changes.
-     * Bind your HUD widget to this delegate so it refreshes automatically.
-     *
-     * Broadcast parameters mirror the five public stat properties above.
-     */
+    
     UPROPERTY(BlueprintAssignable, Category = "Stats|Events")
     FOnStatsUpdated OnStatsUpdated;
     
-    /**
-     * Manually reset all stats to zero and broadcast the reset.
-     * Useful for a "Restart" or "New Game" button.
-     */
     UFUNCTION(BlueprintCallable, Category = "Stats")
     void ResetStats();
 
@@ -115,7 +105,7 @@ private:
      * @param bCorrect     True → correct dish; False → wrong dish.
      */
     UFUNCTION()
-    void HandleOrderDelivered(int32 TableNumber, bool bCorrect);
+    void HandleOrderDelivered(int32 TableNumber, float IngredientPrice);
 
     /**
      * Called when any table fires OnOrderExpired.

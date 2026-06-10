@@ -50,12 +50,10 @@ void ACustomGameMode::SubscribeToAllTables()
     }
 }
 
-void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, bool bCorrect)
+void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, float IngredientPrice)
 {
-    if (bCorrect)
-    {
         Score       += PointsPerCorrectDelivery;
-        TotalTips   += TipPerCorrectDelivery;
+        TotalTips   += IngredientPrice;
         OrdersCorrect++;
 
         UE_LOG(LogTemp, Log,
@@ -63,18 +61,6 @@ void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, bool bCorrect)
                  "+%d pts  +$%.2f tip  (Score=%d, Tips=$%.2f)"),
             TableNumber, PointsPerCorrectDelivery, TipPerCorrectDelivery,
             Score, TotalTips);
-    }
-    else
-    {
-        Score = FMath::Max(0, Score - PenaltyPerWrongDelivery);
-        OrdersWrong++;
-
-        UE_LOG(LogTemp, Warning,
-            TEXT("ScriptedServiceGameMode: Table %d — Wrong dish! "
-                 "-%d pts  (Score=%d)"),
-            TableNumber, PenaltyPerWrongDelivery, Score);
-    }
-
     BroadcastStats();
 }
 
@@ -95,7 +81,7 @@ void ACustomGameMode::HandleOrderExpired(int32 TableNumber)
 void ACustomGameMode::ResetStats()
 {
     Score         = 0;
-    TotalTips     = 0.0f;
+    TotalTips     = 20.0f;
     OrdersCorrect = 0;
     OrdersWrong   = 0;
     OrdersExpired = 0;
