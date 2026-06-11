@@ -3,6 +3,9 @@
 
 #include "TableActor.h"
 
+#include "CustomGameMode.h"
+#include "Kismet/GameplayStatics.h"
+
 ATableActor::ATableActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -23,6 +26,9 @@ void ATableActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	GM = Cast<ACustomGameMode>(
+		UGameplayStatics::GetGameMode(GetWorld()));
+	
 	CurrentOrder.OrderState    = EOrderState::Waiting;
 	CurrentOrder.RequestedDish = nullptr;
 	CurrentOrder.TableNumber   = TableNumber;
@@ -61,22 +67,8 @@ void ATableActor::BeginPlay()
 			TableNumber);
 		return;
 	}
-
-	// if (bGenerateOrderOnBeginPlay)
-	// {
-	// 	float InitialDelay = FMath::FRandRange(0.5f, 3.0f);
-	// 	GetWorldTimerManager().SetTimer(
-	// 		OrderGenerationTimerHandle,
-	// 		this,
-	// 		&ATableActor::GenerateRandomOrder,
-	// 		InitialDelay,
-	// 		false
-	// 	);
-	// }
-	// else
-	// {
-		ScheduleNextOrder();
-	// }
+	
+	ScheduleNextOrder();
 }
 
 void ATableActor::Tick(float DeltaTime)
@@ -107,7 +99,13 @@ void ATableActor::PlaceOrder(TSubclassOf<ABaseIngredient> Dish)
 		UE_LOG(LogTemp, Warning, TEXT("Table %d: Attempted to place order with null dish"), TableNumber);
 		return;
 	}
-    
+
+	
+	if (!GM->IncreaseOrderCount())
+	{
+		return;	
+	}
+	
 	CurrentOrder.RequestedDish = Dish;
 	CurrentOrder.OrderState = EOrderState::Waiting;
 	CurrentOrder.TableNumber = TableNumber;

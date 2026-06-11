@@ -6,18 +6,12 @@
 #include "TableActor.h"
 #include "CustomGameMode.generated.h"
 
-//  @param Score            Current cumulative score (points).
-//  @param TotalTips        Total tips earned so far (dollars, float).
-//  @param OrdersCorrect    Running count of correctly delivered orders.
-//  @param OrdersWrong      Running count of wrongly delivered orders.
-//  @param OrdersExpired    Running count of orders that timed-out.
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(
+//  @param Score            Current cumulative score (points)
+//  @param TotalTips        Total tips earned so far (dollars, float)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FOnStatsUpdated,
     int32,  Score,
-    float,  TotalTips,
-    int32,  OrdersCorrect,
-    int32,  OrdersWrong,
-    int32,  OrdersExpired
+    float,  TotalTips
 );
 
 UCLASS()
@@ -35,55 +29,41 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Scoring",
         meta = (ClampMin = "0"))
-    int32 PenaltyPerWrongDelivery = 25;
-    
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Scoring",
-        meta = (ClampMin = "0"))
     int32 PenaltyPerExpiredOrder = 25;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Scoring",
-        meta = (ClampMin = "0.0"))
-    float TipPerCorrectDelivery = 100.0f;
-
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 Score = 0;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     float TotalTips = 20.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int MaxNumberOfOrders = 2;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-    int32 OrdersCorrect = 0;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int ActiveOrders = 0;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-    int32 OrdersWrong = 0;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-    int32 OrdersExpired = 0;
-
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int NumberOfTables;
     
     UPROPERTY(BlueprintAssignable, Category = "Stats|Events")
     FOnStatsUpdated OnStatsUpdated;
     
     UFUNCTION(BlueprintCallable, Category = "Stats")
     void ResetStats();
+    UFUNCTION(BlueprintCallable)
+    bool IncreaseOrderCount();
 
     /**
-     * Returns the current stats as a formatted debug string.
-     * Handy for on-screen debug overlays during development.
-     *
-     * @return  Multi-line human-readable stats string.
-     */
-    UFUNCTION(BlueprintPure, Category = "Stats|Debug")
-    FString GetStatsDebugString() const;
-
-    /**
- * Attempts to spend the given amount from TotalTips.
- * @param Amount - Amount to spend
- * @return true if player had enough money and it was spent, false otherwise
- */
+    * Attempts to spend the given amount from TotalTips.
+    * @param Amount - Amount to spend
+    * @return true if player had enough money and it was spent, false otherwise
+    */
     UFUNCTION(BlueprintCallable, Category = "Stats")
     bool SpendMoney(float Amount);
+
+    UFUNCTION(BlueprintCallable, Category = "Stats")
+    void UpdateMaxNumberOfOrder(int value);
 
 protected:
 

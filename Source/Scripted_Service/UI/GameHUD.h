@@ -36,8 +36,7 @@ private:
     float Tips = -1.0f;
 
     UFUNCTION()
-    void RefreshStats(int32 Score, float TotalTips,
-                      int32 OrdersCorrect, int32 OrdersWrong, int32 OrdersExpired);
+    void RefreshStats(int32 Score, float TotalTips);
 
     UFUNCTION()
     void HandleGrabItem(bool bisHoldingItem);

@@ -18,8 +18,7 @@ void UGameHUD::NativeConstruct()
         Tips = GM->TotalTips;
 
         // Push initial values so the HUD shows 0s from the start
-        RefreshStats(GM->Score, GM->TotalTips,
-                     GM->OrdersCorrect, GM->OrdersWrong, GM->OrdersExpired);
+        RefreshStats(GM->Score, GM->TotalTips);
     }
     else
     {
@@ -54,9 +53,7 @@ void UGameHUD::HandleRobotFailCommand(FString ErrorMessageText)
     OnRobotFailCommand(ErrorMessageText);
 }
 
-void UGameHUD::RefreshStats(int32 Score, float TotalTips,
-                             int32 OrdersCorrect, int32 OrdersWrong,
-                             int32 OrdersExpired)
+void UGameHUD::RefreshStats(int32 Score, float TotalTips)
 {
     if (ScoreText)
     {
@@ -70,7 +67,6 @@ void UGameHUD::RefreshStats(int32 Score, float TotalTips,
             FText::FromString(FString::Printf(TEXT("Tips: $%.2f"), TotalTips)));
     }
 
-    // Fire the tip-animation event only when tips actually increased
     if (TotalTips > Tips)
     {
         OnTipsChanged(TotalTips - Tips);

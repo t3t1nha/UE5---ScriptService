@@ -12,6 +12,8 @@
 #include "GameFramework/Actor.h"
 #include "TableActor.generated.h"
 
+class ACustomGameMode;
+
 /**
  * Broadcast when this table generates a new random order.
  * @param TableNumber  - Which table placed the order
@@ -159,6 +161,8 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	
 private:
+	ACustomGameMode* GM;
+	
 	/** Fires GenerateRandomOrder() after a random delay */
 	FTimerHandle OrderGenerationTimerHandle;
 

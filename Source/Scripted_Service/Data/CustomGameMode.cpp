@@ -15,16 +15,14 @@ void ACustomGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Subscribe to every table so we catch all delivery and timeout events.
     SubscribeToAllTables();
-
-    // Push an initial broadcast so the HUD can display "0 / $0.00" straight away.
+    
     BroadcastStats();
 }
 
 void ACustomGameMode::SubscribeToAllTables()
 {
-    int32 TableCount = 0;
+    NumberOfTables = 0;
 
     for (TActorIterator<ATableActor> It(GetWorld()); It; ++It)
     {
@@ -36,13 +34,10 @@ void ACustomGameMode::SubscribeToAllTables()
         Table->OnOrderExpired.AddDynamic(
             this, &ACustomGameMode::HandleOrderExpired);
 
-        ++TableCount;
+        ++NumberOfTables;
     }
 
-    UE_LOG(LogTemp, Log,
-        TEXT("ScriptedServiceGameMode: Subscribed to %d table(s)."), TableCount);
-
-    if (TableCount == 0)
+    if (NumberOfTables == 0)
     {
         UE_LOG(LogTemp, Warning,
             TEXT("ScriptedServiceGameMode: No ATableActor found in the level. "
@@ -54,25 +49,13 @@ void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, float IngredientPr
 {
         Score       += PointsPerCorrectDelivery;
         TotalTips   += IngredientPrice;
-        OrdersCorrect++;
 
-        UE_LOG(LogTemp, Log,
-            TEXT("ScriptedServiceGameMode: Table %d — Correct delivery! "
-                 "+%d pts  +$%.2f tip  (Score=%d, Tips=$%.2f)"),
-            TableNumber, PointsPerCorrectDelivery, TipPerCorrectDelivery,
-            Score, TotalTips);
     BroadcastStats();
 }
 
 void ACustomGameMode::HandleOrderExpired(int32 TableNumber)
 {
     Score = FMath::Max(0, Score - PenaltyPerExpiredOrder);
-    OrdersExpired++;
-
-    UE_LOG(LogTemp, Warning,
-        TEXT("ScriptedServiceGameMode: Table %d — Order expired! "
-             "-%d pts  (Score=%d)"),
-        TableNumber, PenaltyPerExpiredOrder, Score);
 
     BroadcastStats();
 }
@@ -81,22 +64,23 @@ void ACustomGameMode::HandleOrderExpired(int32 TableNumber)
 void ACustomGameMode::ResetStats()
 {
     Score         = 0;
+    MaxNumberOfOrders = 2;
     TotalTips     = 20.0f;
-    OrdersCorrect = 0;
-    OrdersWrong   = 0;
-    OrdersExpired = 0;
 
     UE_LOG(LogTemp, Log, TEXT("ScriptedServiceGameMode: Stats reset."));
 
     BroadcastStats();
 }
 
-
-FString ACustomGameMode::GetStatsDebugString() const
+bool ACustomGameMode::IncreaseOrderCount()
 {
-    return FString::Printf(
-        TEXT("Score: %d\nTips: $%.2f\nCorrect: %d  Wrong: %d  Expired: %d"),
-        Score, TotalTips, OrdersCorrect, OrdersWrong, OrdersExpired);
+    if (ActiveOrders >= MaxNumberOfOrders)
+    {
+        return false;
+    }
+    
+    ActiveOrders++;
+    return true;
 }
 
 bool ACustomGameMode::SpendMoney(float Amount)
@@ -112,10 +96,17 @@ bool ACustomGameMode::SpendMoney(float Amount)
     return true;
 }
 
+void ACustomGameMode::UpdateMaxNumberOfOrder(int value)
+{
+    if (MaxNumberOfOrders >= NumberOfTables){
+        MaxNumberOfOrders += value;
+    }
+}
+
 
 void ACustomGameMode::BroadcastStats()
 {
     Score = FMath::Max(0, Score);
 
-    OnStatsUpdated.Broadcast(Score, TotalTips, OrdersCorrect, OrdersWrong, OrdersExpired);
+    OnStatsUpdated.Broadcast(Score, TotalTips);
 }
