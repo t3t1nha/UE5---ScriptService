@@ -38,6 +38,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Kitchen")
 	AKitchenCounter* GetKitchenCounter() const;
 
+	UFUNCTION(BlueprintCallable)
+	void PlaceOrderOnTables();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

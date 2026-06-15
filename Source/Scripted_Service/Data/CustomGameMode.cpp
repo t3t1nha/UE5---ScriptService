@@ -2,8 +2,10 @@
 
 
 #include "CustomGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
 #include "TableActor.h"
+#include "TableManager.h"
 
 ACustomGameMode::ACustomGameMode()
 {
@@ -15,6 +17,11 @@ void ACustomGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
+    TableManager = Cast<ATableManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ATableManager::StaticClass()));
+    if (TableManager != nullptr)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("TableManagerSet") );
+    }
     SubscribeToAllTables();
     
     BroadcastStats();
@@ -47,19 +54,30 @@ void ACustomGameMode::SubscribeToAllTables()
 
 void ACustomGameMode::HandleOrderDelivered(int32 TableNumber, float IngredientPrice)
 {
-        Score       += PointsPerCorrectDelivery;
-        TotalTips   += IngredientPrice;
+    Score       += PointsPerCorrectDelivery;
+    TotalTips   += IngredientPrice;
+    ActiveOrders--;
 
     BroadcastStats();
+
+    TableManager->PlaceOrderOnTables();
 }
 
 void ACustomGameMode::HandleOrderExpired(int32 TableNumber)
 {
     Score = FMath::Max(0, Score - PenaltyPerExpiredOrder);
-
+    ActiveOrders--;
+    
     BroadcastStats();
+    
+    TableManager->PlaceOrderOnTables();
 }
 
+
+void ACustomGameMode::ReorderTables()
+{
+    TableManager->PlaceOrderOnTables();
+}
 
 void ACustomGameMode::ResetStats()
 {

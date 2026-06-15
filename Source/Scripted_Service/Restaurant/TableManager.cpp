@@ -49,6 +49,14 @@ AKitchenCounter* ATableManager::GetKitchenCounter() const
 	return KitchenCounter;
 }
 
+void ATableManager::PlaceOrderOnTables()
+{
+	for (ATableActor* Table : AllTables)
+	{
+			Table->ScheduleNextOrder();
+	}
+}
+
 // Called when the game starts or when spawned
 void ATableManager::BeginPlay()
 {

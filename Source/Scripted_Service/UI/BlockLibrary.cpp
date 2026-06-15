@@ -80,13 +80,13 @@ TArray<FBlockData> UBlockLibrary::GetDefaultBlocks()
     IfCarrying.bIsContainerBlock = true;
     Blocks.Add(IfCarrying);
 
-    FBlockData IfNotCarrying;
-    IfNotCarrying.InstructionType   = EInstructionType::IfNotCarryingDish;
-    IfNotCarrying.DisplayName       = FText::FromString("If NOT Carrying Dish");
-    IfNotCarrying.BlockColor        = FLinearColor(1.0f, 0.85f, 0.1f);
-    IfNotCarrying.Category          = "Logic";
-    IfNotCarrying.bIsContainerBlock = true;
-    Blocks.Add(IfNotCarrying);
+    // FBlockData IfNotCarrying;
+    // IfNotCarrying.InstructionType   = EInstructionType::IfNotCarryingDish;
+    // IfNotCarrying.DisplayName       = FText::FromString("If NOT Carrying Dish");
+    // IfNotCarrying.BlockColor        = FLinearColor(1.0f, 0.85f, 0.1f);
+    // IfNotCarrying.Category          = "Logic";
+    // IfNotCarrying.bIsContainerBlock = true;
+    // Blocks.Add(IfNotCarrying);
 
     FBlockData RepeatLoop;
     RepeatLoop.InstructionType        = EInstructionType::RepeatLoop;
@@ -105,61 +105,61 @@ TArray<FBlockData> UBlockLibrary::GetDefaultBlocks()
     LoopForever.bIsContainerBlock = true;
     Blocks.Add(LoopForever);
 
-    FBlockData SetSlotBlock;
-    SetSlotBlock.InstructionType       = EInstructionType::SetSlot;
-    SetSlotBlock.DisplayName           = FText::FromString(TEXT("Set Slot"));
-    SetSlotBlock.BlockColor            = FLinearColor(0.3f, 0.85f, 0.55f); 
-    SetSlotBlock.Category              = "Memory";
-    SetSlotBlock.bHasSlotIndexParameter = true; 
-    SetSlotBlock.bHasSlotValueParameter = true; 
-    Blocks.Add(SetSlotBlock);
-    
-    FBlockData IncrSlotBlock;
-    IncrSlotBlock.InstructionType        = EInstructionType::IncrementSlot;
-    IncrSlotBlock.DisplayName            = FText::FromString(TEXT("Increment Slot"));
-    IncrSlotBlock.BlockColor             = FLinearColor(0.3f, 0.85f, 0.55f);
-    IncrSlotBlock.Category               = "Memory";
-    IncrSlotBlock.bHasSlotIndexParameter = true;
-    Blocks.Add(IncrSlotBlock);
-    
-    FBlockData DecrSlotBlock;
-    DecrSlotBlock.InstructionType        = EInstructionType::DecrementSlot;
-    DecrSlotBlock.DisplayName            = FText::FromString(TEXT("Decrement Slot"));
-    DecrSlotBlock.BlockColor             = FLinearColor(0.3f, 0.85f, 0.55f);
-    DecrSlotBlock.Category               = "Memory";
-    DecrSlotBlock.bHasSlotIndexParameter = true;
-    Blocks.Add(DecrSlotBlock);
-    
-    FBlockData IfSlotEqBlock;
-    IfSlotEqBlock.InstructionType        = EInstructionType::IfSlotEquals;
-    IfSlotEqBlock.DisplayName            = FText::FromString(TEXT("If Slot = Value"));
-    IfSlotEqBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
-    IfSlotEqBlock.Category               = "Memory";
-    IfSlotEqBlock.bIsContainerBlock      = true;
-    IfSlotEqBlock.bHasSlotIndexParameter = true;
-    IfSlotEqBlock.bHasSlotValueParameter = true;
-    Blocks.Add(IfSlotEqBlock);
-    
-    FBlockData IfSlotGtBlock;
-    IfSlotGtBlock.InstructionType        = EInstructionType::IfSlotGreaterThan;
-    IfSlotGtBlock.DisplayName            = FText::FromString(TEXT("If Slot > Value"));
-    IfSlotGtBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
-    IfSlotGtBlock.Category               = "Memory";
-    IfSlotGtBlock.bIsContainerBlock      = true;
-    IfSlotGtBlock.bHasSlotIndexParameter = true;
-    IfSlotGtBlock.bHasSlotValueParameter = true;
-    Blocks.Add(IfSlotGtBlock);
-    
-    FBlockData IfSlotLtBlock;
-    IfSlotLtBlock.InstructionType        = EInstructionType::IfSlotLessThan;
-    IfSlotLtBlock.DisplayName            = FText::FromString(TEXT("If Slot < Value"));
-    IfSlotLtBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
-    IfSlotLtBlock.Category               = "Memory";
-    IfSlotLtBlock.bIsContainerBlock      = true;
-    IfSlotLtBlock.bHasSlotIndexParameter = true;
-    IfSlotLtBlock.bHasSlotValueParameter = true;
-    Blocks.Add(IfSlotLtBlock);
-    
+    // FBlockData SetSlotBlock;
+    // SetSlotBlock.InstructionType       = EInstructionType::SetSlot;
+    // SetSlotBlock.DisplayName           = FText::FromString(TEXT("Set Slot"));
+    // SetSlotBlock.BlockColor            = FLinearColor(0.3f, 0.85f, 0.55f); 
+    // SetSlotBlock.Category              = "Memory";
+    // SetSlotBlock.bHasSlotIndexParameter = true; 
+    // SetSlotBlock.bHasSlotValueParameter = true; 
+    // Blocks.Add(SetSlotBlock);
+    // 
+    // FBlockData IncrSlotBlock;
+    // IncrSlotBlock.InstructionType        = EInstructionType::IncrementSlot;
+    // IncrSlotBlock.DisplayName            = FText::FromString(TEXT("Increment Slot"));
+    // IncrSlotBlock.BlockColor             = FLinearColor(0.3f, 0.85f, 0.55f);
+    // IncrSlotBlock.Category               = "Memory";
+    // IncrSlotBlock.bHasSlotIndexParameter = true;
+    // Blocks.Add(IncrSlotBlock);
+    // 
+    // FBlockData DecrSlotBlock;
+    // DecrSlotBlock.InstructionType        = EInstructionType::DecrementSlot;
+    // DecrSlotBlock.DisplayName            = FText::FromString(TEXT("Decrement Slot"));
+    // DecrSlotBlock.BlockColor             = FLinearColor(0.3f, 0.85f, 0.55f);
+    // DecrSlotBlock.Category               = "Memory";
+    // DecrSlotBlock.bHasSlotIndexParameter = true;
+    // Blocks.Add(DecrSlotBlock);
+    // 
+    // FBlockData IfSlotEqBlock;
+    // IfSlotEqBlock.InstructionType        = EInstructionType::IfSlotEquals;
+    // IfSlotEqBlock.DisplayName            = FText::FromString(TEXT("If Slot = Value"));
+    // IfSlotEqBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
+    // IfSlotEqBlock.Category               = "Memory";
+    // IfSlotEqBlock.bIsContainerBlock      = true;
+    // IfSlotEqBlock.bHasSlotIndexParameter = true;
+    // IfSlotEqBlock.bHasSlotValueParameter = true;
+    // Blocks.Add(IfSlotEqBlock);
+    // 
+    // FBlockData IfSlotGtBlock;
+    // IfSlotGtBlock.InstructionType        = EInstructionType::IfSlotGreaterThan;
+    // IfSlotGtBlock.DisplayName            = FText::FromString(TEXT("If Slot > Value"));
+    // IfSlotGtBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
+    // IfSlotGtBlock.Category               = "Memory";
+    // IfSlotGtBlock.bIsContainerBlock      = true;
+    // IfSlotGtBlock.bHasSlotIndexParameter = true;
+    // IfSlotGtBlock.bHasSlotValueParameter = true;
+    // Blocks.Add(IfSlotGtBlock);
+    // 
+    // FBlockData IfSlotLtBlock;
+    // IfSlotLtBlock.InstructionType        = EInstructionType::IfSlotLessThan;
+    // IfSlotLtBlock.DisplayName            = FText::FromString(TEXT("If Slot < Value"));
+    // IfSlotLtBlock.BlockColor             = FLinearColor(1.0f, 0.85f, 0.1f);
+    // IfSlotLtBlock.Category               = "Memory";
+    // IfSlotLtBlock.bIsContainerBlock      = true;
+    // IfSlotLtBlock.bHasSlotIndexParameter = true;
+    // IfSlotLtBlock.bHasSlotValueParameter = true;
+    // Blocks.Add(IfSlotLtBlock);
+     
     FBlockData IfKitchenBlock;
     IfKitchenBlock.InstructionType   = EInstructionType::IfKitchenHasOrder;
     IfKitchenBlock.DisplayName       = FText::FromString(TEXT("If Kitchen Ready"));

@@ -6,6 +6,8 @@
 #include "TableActor.h"
 #include "CustomGameMode.generated.h"
 
+class ATableManager;
+
 //  @param Score            Current cumulative score (points)
 //  @param TotalTips        Total tips earned so far (dollars, float)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
@@ -13,6 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     int32,  Score,
     float,  TotalTips
 );
+
 
 UCLASS()
 class SCRIPTED_SERVICE_API ACustomGameMode : public AGameModeBase
@@ -38,7 +41,7 @@ public:
     float TotalTips = 20.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int MaxNumberOfOrders = 2;
+    int MaxNumberOfOrders = 5;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
     int ActiveOrders = 0;
@@ -48,6 +51,9 @@ public:
     
     UPROPERTY(BlueprintAssignable, Category = "Stats|Events")
     FOnStatsUpdated OnStatsUpdated;
+
+    UFUNCTION(BlueprintCallable)
+    void ReorderTables();
     
     UFUNCTION(BlueprintCallable, Category = "Stats")
     void ResetStats();
@@ -71,6 +77,8 @@ protected:
 
 private:
 
+    ATableManager* TableManager;
+    
     /**
      * Iterates all ATableActor instances in the current level and binds
      * OnOrderDelivered / OnOrderExpired to this GameMode's handlers.

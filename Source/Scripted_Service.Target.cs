@@ -11,5 +11,6 @@ public class Scripted_ServiceTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
 		ExtraModuleNames.Add("Scripted_Service");
+		bWithLiveCoding = false;
 	}
 }

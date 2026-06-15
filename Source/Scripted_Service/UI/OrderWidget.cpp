@@ -55,6 +55,9 @@ void UOrderWidget::ShowOrder(int32 TableNumber, FText TitleText, const FOrderDat
     if (DishIcon)
     {
         DishIcon->SetVisibility(ESlateVisibility::Collapsed);
+        // DishIcon->SetBrushFromTexture(Order.RequestedDish.GetDefaultObject()->IngredientIcon , false);
+        //
+        //DishIcon->Brush.SetImageSize(FVector2D(32, 32));
     }
 
     SetVisibility(ESlateVisibility::HitTestInvisible);

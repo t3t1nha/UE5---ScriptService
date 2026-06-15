@@ -172,13 +172,13 @@ void AApparatusActor::StartCookingProcess()
 	{
 		return;
 	}
-
-	OnStartCooking();
 	
 	if (CurrentRecipeData.OutputItemSubclass != nullptr && CurrentRecipeData.BaseCookTime > 0.0f)
 	{
 		GetWorldTimerManager().ClearTimer(CookingTimerHandle);
 
+		OnStartCooking();
+		
 		GetWorldTimerManager().SetTimer(
 			CookingTimerHandle,
 			this,

@@ -156,6 +156,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Table|UI")
 	TSubclassOf<UOrderWidget> OrderWidgetClass;
 
+	UFUNCTION(BlueprintCallable)
+	void ScheduleNextOrder();
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -168,12 +171,6 @@ private:
 
 	/** Fires OnOrderTimedOut() if the order was never taken in time */
 	FTimerHandle OrderTimeoutTimerHandle;
-	
-	/**
-	 * Schedule the next random order using a random delay in
-	 * [MinOrderInterval, MaxOrderInterval].
-	 */
-	void ScheduleNextOrder();
 
 	/**
 	 * Called by the timeout timer when an order was never taken.

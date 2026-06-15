@@ -8,6 +8,8 @@
 #include "GameFramework/Actor.h"
 #include "BaseIngredient.generated.h"
 
+class UTexture2D;
+
 UCLASS()
 class SCRIPTED_SERVICE_API ABaseIngredient : public AActor, public IGrabableInterface
 {
@@ -44,4 +46,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Stats")
 	float SellPrice = 5.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
+	float BuyPrice = 2.5f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UTexture2D* IngredientIcon;
 };
